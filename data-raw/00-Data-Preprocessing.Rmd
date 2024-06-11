@@ -1,0 +1,1165 @@
+---
+title: "00-Data-Preprocessing"
+output:
+  html_document:
+    df_print: paged
+---
+# Introduction
+
+In this notebook we read and preprocess the raw data collected as a paper-based survey conducted face-to-face in Santiago during November and December 2016, by Dr. Beatriz Mella-Lira. The survey collected information on a wide range of travel-related issues (socio-demographics, health-related, perceptions and travel behaviour, travel choices and planning, social interaction factors, built environment, and so on). 
+
+The data collection considered a quota-sampling method based on the information from the Pre-census of 2012, and with a total of 451 persons. 
+
+This section installs and loads several R packages, including `remotes`, `bSantiago`, `sf`, `readxl`, `dplyr`, `here`, and `glue`. These packages provide various functionalities for data manipulation, spatial analysis, and more.
+
+```{r Package Installation and Loading}
+
+#install.packages("remotes")
+#remotes::install_github("paezha/bSantiago")
+#install.packages("here")
+#library(bSantiago)
+library(sf)
+library(readxl)
+library(dplyr)
+library(here)
+library(glue)
+```
+
+# Saving the communa file:
+
+Then we are going through Reading polygon shapefile data representing municipalities (communes) from a specified directory using the `st_read` function from the `sf` package.
+
+```{r Loading Communa (Municipality) Data}
+#table(A$r0A_COMUNA)
+
+# A <- SantiagoSurvey
+
+# bSantiago::San_comuna2
+# dir <-"data-raw/comunas_1/"
+# comunas_1 <- st_read(paste0(dir,"comunas_1Polygon.shp"))
+# 
+
+
+comunas_1 <- st_read(paste0(here(), "/data-raw/comunas_1/comunas_1Polygon.shp"))
+
+
+# San_comuna2 <- comunas_1 %>%
+#   left_join(A,
+#               #select(COMUNA) %>%
+#               #st_drop_geometry(),
+#             by = c("COMUNA"="r0A_COMUNA"))
+# 
+# 
+# San_comuna2_df <- st_as_sf(San_comuna2)
+# View(San_comuna2_df)
+```
+
+# Read source file and Rename:
+
+Now we are going to Read an Excel file containing survey data using `read_xlsx` from the `readxl` package.
+The survey data is then translated and reformatted using the %>% (pipe) operator from `dplyr`. The rename function is used to rename specific columns, which we used to translate our variable's name in this dataset.
+
+The `rename` section is extensive and involves renaming numerous variables in the survey data. Each line corresponds to renaming a specific variable using the `r0A_COMMUNE = r0A_COMUNA` format. For example, `r0A_COMMUNE` is the new name for the original variable r0A_COMUNA.
+
+This step is crucial for making the code more readable and understandable by using descriptive variable names.
+
+```{r Reading and Translating Survey Data}
+
+# Loading dataset (answers to the questions)
+SantiagoSurvey <- readxl::read_xlsx(paste0(here(), "/data-raw/SantiagoSurvey2016.xlsx"))
+SantiagoSurvey_csv <- readr::read_csv(paste0(here(), "/data-raw/SantiagoSurvey2016.csv"))
+
+# Loading dataset dictionary (the questions)
+SantiagoSurvey_dicxl <- readxl::read_xlsx(paste0(here(), "/data-raw/SantiagoSurvey2016-Survey-Questions-and-Dictionary.xlsx"))
+SantiagoSurvey_diccsv <- readr::read_csv(paste0(here(), "/data-raw/SantiagoSurvey2016-Survey-Questions-and-Dictionary.csv"))
+
+
+SantiagoSurvey_trans <- SantiagoSurvey %>%
+  rename( 
+       ID = NUMERO, # rename() function of dplyr
+       ORIGIN = ORIGEN,
+       IC_Residence= r0A_COMUNA,
+       IC_Macro_res = `r0B_MACR_ ZONA`,
+       IC_Home_St = r0B_CALLE_1,
+       IC_Home_St2= r0B_CALLE_2,
+       IC_Gender = r0C_GENERO,
+       IC_Age = r0D_EDAD,
+       IC_Weight = r0E_PESO,
+       IC_Height= r0F_ALTURA,
+       IC_Education = r0G_EDUCACION,
+       IC_Occupation = r0H_OCUPACION,
+       IC_Work_St = r0I_COM_TRAB_1,
+       IC_Work_St2 = r0I_COM_TRAB_2,
+       IC_Income = r0J_INGRESO,
+       IC_Adults = r0K_ADULTOS,
+       IC_Children = r0L_MENORES,
+       IC_Drv_license = r0N_LICENCIA,
+       IC_Disabil = r0M_DISCAPA,
+       IC_Dis_type = r0O_TIPO,
+       IC_Main_mode = r0P_MODO1,
+       IC_Sec_mode = r0Q_MODO2,
+       IC_Other_mode = r0R_MODO3,
+       H_Stress = r1A_ESTRES,
+       H_Effort = r1B_ESFUERZO,
+       H_Proximity = r1C_CERCANIA,
+       H_Contam = r1D_CONTAM,
+       H_Safety = r1E_SEGUR,
+       H_Comfort = r1F_COMOD,
+       H_Imp_stress = r1GA_ESTRES,
+       H_Imp_effort = r1GB_ESFUER,
+       H_Imp_prox = r1GC_CERC,
+       H_Imp_contam = r1GD_CONTAM,
+       H_Imp_safety = r1GE_SEGUR,
+       H_Imp_comfort = r1GF_COMOD,
+       H_Imp_stress = r1GA_ESTRES,
+       H_Imp_effort = r1GB_ESFUER,
+       H_Imp_prox = r1GC_CERC,
+       H_Imp_contam = r1GD_CONTAM,
+       H_Imp_safety = r1GE_SEGUR,
+       H_Imp_comfort = r1GF_COMOD,
+       FE_Freedom = r2AA_LIBERTAD,
+       FE_Unsafety = r2AB_INSEG,
+       FE_Functionality = r2AC_FUNCIONA,
+       FE_Enjoyment = r2AD_ENTRET,
+       FE_Low_cost = r2AE_COSTO,
+       FE_Poverty = r2AF_POBREZ,
+       FE_Safety_mode = r2AG_SEGURIDAD,
+       FE_Waste_time = r2AH_TIEMPO,
+       FE_Unpunctuality = r2AI_IMPUNT,
+       FE_Congestion = r2AJ_CONGEST,
+       FE_Efficiency = r2AK_EFICIENC,
+       FE_Luxury = r2AL_LUJO,
+       FE_Envrnmt_care = r2AM_AMBIENT,
+        FE_Health = r2AN_SALUD,
+       FE_Social_Interaction = r2AO_INTSOCI,
+       FE_Uncomfort = r2AP_INCOM,
+       FE_Happiness = r2AQ_FELICID,
+       FE_Status = r2AR_ESTAT,
+       FE_Daily_enjoy = r2B_DISFRUT,
+       FE_Imp_quality = r2C_IMPORT,
+       FE_Affect = r2D_AFECTA,
+       FE_Facility = r2E_FACILIT,
+       RPD_Access = r3A_ACCESS, 
+       RPD_Acc_Employment = r3B_ACC_EM,
+       RPD_Family_vis = r3CA_FAM,
+       RPD_Rec_activity = r3CB_REC,
+       RPD_Cult_activity = r3CC_CUL,
+       RPD_Sport = r3CD_DEP,
+       RPD_Groc_shopping = r3CE_COM,
+       RPD_Social_activity = r3CF_SOC,
+       RPD_Imp_Family_vis = r3DA_FAM,
+       RPD_Imp_Rec_activity = r3DB_REC,
+       RPD_Imp_Cult_activity = r3DC_CUL,
+       RPD_Imp_Sport = r3DD_DEP,
+       RPD_Imp_Groc_shopping = r3DE_COM,
+       RPD_Imp_Social_activity = r3DF_SOC,
+       RPD_Imp_Options = r3E_OPCIONES,
+       RPD_Trans_Quality = r3F_ACCESO,
+       RPD_Inc_Quality = r3G_CALIDAD,
+       RPD_Affordable_mode = r3H_ECON,
+       RPD_Unaffordable_mode = r3I_NOECON,
+       RPD_Imp_commercial = r3JA_OFIC,
+       RPD_Imp_dispon_mode = r3JB_MODOS,
+       RPD_Imp_imprv_comfort = r3JC_COMOD,
+       RPD_Imp_othermodes = r3JD_OTROS,
+       SI_Interactionlevel = r4A_INTERACC,
+       SI_Imp_interaction = r4B_PERSON,
+       SI_Discrimination = r4C_DISCRIM,
+       SI_Discrim_mode = r4D_MODO,
+       NS_Change_mode = r5A_CAMBIO,
+       NS_Change_type = r5B_CAMBIO,
+       NS_Sustain_mode = r5C_SUST,
+       NS_Imp_sustainmode = r5D_IMP_SUST,
+       NS_Willing_pay_sustainmode = r5E_PAGO,
+       NS_Pay_sustaintype = r5F_PAGOMAS,
+       NS_Imp_tree = r5GA_ARBOL,
+       NS_Imp_park = r5GB_PARK,
+       NS_Imp_imprv_sustainmode = r5GC_MODO,
+       NS_Imp_increasesusmodes = r5GD_MODO,
+       IS_Shiftmode = r6A_INTERC,
+       IS_Qualityshift = r6B_CALIDAD,
+       IS_Waitingtime = r6CA_ESPERA,
+       IS_Shift_time = r6CB_TRANSB,
+       IS_Travel_time = r6CC_TOTAL,
+       IS_Difficulty_modechange = r6D_DIFICULTA,
+       IS_Techtool = r6E_HERRAM,
+       IS_Info_techtool = r6F_INFO,
+       IS_Imp_techtool = r6G_IMP_INFO,
+       BE_Autospace = r7AA_AUTO,
+       BE_Parking_num = r7AB_EST,
+       BE_Quality_highway = r7AC_AUTOP,
+       BE_Space_pedestrian = r7AD_PEATON,
+       BE_Quality_sidewalk = r7AE_VERED,
+       BE_Clean_busstop = r7AF_PARAD,
+       BE_Seat_busstop = r7AG_ASIENT,
+       BE_Climateprotection_busstop = r7AH_CLIMA,
+       BE_cycloway_num = r7AI_CICLOV,
+       BE_Quality_cycloway = r7AJ_CICLOV,
+       BE_Bikeshare = r7AK_BICI,
+       BE_Imp_Autospace = r7BA_AUTO,
+       BE_Imp_Parking_num = r7BB_EST,
+       BE_Imp_Quality_highway = r7BC_AUTOP,
+       BE_Imp_Space_pedestrian = r7BD_PEATON,
+       BE_Imp_Quality_sidewalk = r7BE_VERED,
+       BE_Imp_Clean_busstop = r7BF_PARAD,
+       BE_Imp_Seat_busstop = r7BG_ASIENT,
+       BE_Imp_Climateprotection_busstop = r7BH_CLIMA,
+       BE_Imp_cycloway_num = r7BI_CICLOV,
+       BE_Imp_Quality_cycloway = r7BJ_CICLOV,
+       BE_Imp_Bikeshare = r7BK_BICI,
+       TW_JobAccess = r8A_ACCESO,
+       TW_Job_Opportunity = r8B_OPORT,
+       TW_Interested_Access = r8C_ACC_COM,
+       TW_Jobsatisfaction = r8D_EMPLEO,
+       TW_Commute_duration = r8E_TIEMPO,
+       TW_Commute_schedule = r8F_HORARIOS,
+       TW_Commute_monthlycost = r8G_GASTO
+       )
+```
+
+# Table separation based on subject and lable conversion
+
+In this section we are going to split each section of the survey and make separate tables with the relevant subject. For first table which is individual characteristics we will do as follows:
+
+Select (ID, starts_with("r0")): Selects the "ID" column and all columns that start with "r0" from the `SantiagoSurvey_trans` data frame.
+
+Then we need to convert A-Z answers into meaningful answers to have a better understanding of people's choice. In this step, the code achieves exactly that by transforming coded responses (A-Z) into more interpretable and meaningful labels for various individual characteristics. This makes the data more accessible and provides a clearer understanding of survey participants' choices and characteristics.
+
+```{r INDIVIDUAL CHARACTERISTICS}
+Santiago_IC <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("IC")) %>%
+  mutate(IC_Gender = factor(IC_Gender, 
+                             levels = c("A", "B"), 
+                             labels = c("WOMAN", "MAN")))  %>% 
+  mutate(IC_Age = factor(IC_Age, 
+                             levels = c("A", "B", "C", "D", "E", "F"), 
+                             labels = c("Less18", "18to24", "25to34", "35to54","55to64", "65more"),
+                             ordered = TRUE))   %>% 
+  mutate(IC_Education = factor(IC_Education, 
+                             levels = c("A", "B", "C", "D", "E"), 
+                             labels = c("ELEMENTARY", "SECUNDARY", "PROFESS_TECH", "COLLEGE", "POSTGRAD"),
+                             ordered = TRUE))   %>% 
+
+  mutate(IC_Occupation = factor(IC_Occupation, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H", "I"), 
+                             labels = c("FULL_TIME", "PART_TIME", "SELF_EMPLOYED", "UNEMPLOYED", "HOME_TAKER","STUDENT", "STUDENT_WORK", "RETIRED", "OTHER"))) %>%  
+  mutate(IC_Income = factor(IC_Income, 
+                             levels = c("A", "B", "C","D", "E", "F"), 
+                             labels = c("Less423", "423to639", "639to977", "977to1550", "1550to2380","2380more"),
+                             ordered = TRUE)) %>%  
+  mutate(IC_Drv_license = factor(IC_Drv_license, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%  
+  mutate(IC_Disabil = factor(IC_Disabil, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%  
+  mutate(IC_Main_mode  = factor(IC_Main_mode , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%  
+  mutate(IC_Sec_mode = factor(IC_Sec_mode, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%  
+  mutate(IC_Other_mode = factor(IC_Other_mode, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK")))   
+  
+```
+
+Next one is going to be the health information table that we need to select those variables starting with `r1`. So 
+Select (ID, starts_with("r1")): Selects the "ID" column and all columns that start with "r1" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as first table.
+
+
+```{r Health}
+Santiago_H <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("H")) %>%
+  mutate(H_Stress = factor(H_Stress, 
+                             levels = c("5", "4", "3", "2", "1"), 
+                             labels = c("VLOW", "LOW", "MODERATE", "HIGH", "VHIGH"),
+                             ordered = TRUE)) %>%
+  mutate(H_Effort = factor(H_Effort, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VNEGATIVE", "NEGATIVE", "NEUTRAL", "POSITIVE", "VPOSITVE"),
+                             ordered = TRUE)) %>%
+  mutate(H_Proximity = factor(H_Proximity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(H_Contam = factor(H_Contam, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VDISSATISFIED", "DISSATISFIED", "UNSURE", "SATISFIED", "VSATISFIED"),
+                             ordered = TRUE)) %>%
+  mutate(H_Safety = factor(H_Safety, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VDISSATISFIED", "DISSATISFIED", "UNSURE", "SATISFIED", "VSATISFIED"),
+                             ordered = TRUE)) %>%
+  mutate(H_Comfort = factor(H_Comfort, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VDISSATISFIED", "DISSATISFIED", "UNSURE", "SATISFIED", "VSATISFIED"),
+                             ordered = TRUE)) %>%
+  mutate(H_Imp_stress  = factor(H_Imp_stress , 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(H_Imp_effort = factor(H_Imp_effort, 
+                            levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                            ordered = TRUE)) %>%
+  mutate(H_Imp_prox = factor(H_Imp_prox, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(H_Imp_contam = factor(H_Imp_contam, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(H_Imp_safety = factor(H_Imp_safety, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(H_Imp_comfort = factor(H_Imp_comfort, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) 
+  
+```
+
+Next one is going to be the feelings and emotions table that we need to select those variables starting with `r2`. So 
+Select (ID, starts_with("r2")): Selects the "ID" column and all columns that start with "r2" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r FEELINGS AND EMOTIONS}
+Santiago_FE <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("FE")) %>%
+  mutate(FE_Freedom  = factor(FE_Freedom , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Unsafety  = factor(FE_Unsafety , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Functionality  = factor(FE_Functionality , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Enjoyment  = factor(FE_Enjoyment , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Low_cost  = factor(FE_Low_cost , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Poverty  = factor(FE_Poverty , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Safety_mode  = factor(FE_Safety_mode , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Waste_time  = factor(FE_Waste_time , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Unpunctuality  = factor(FE_Unpunctuality , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Congestion  = factor(FE_Congestion , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Efficiency  = factor(FE_Efficiency , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Luxury  = factor(FE_Luxury , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Envrnmt_care  = factor(FE_Envrnmt_care , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Health  = factor(FE_Health , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Social_Interaction  = factor(FE_Social_Interaction , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Uncomfort  = factor(FE_Uncomfort , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Happiness  = factor(FE_Happiness , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(FE_Status = factor(FE_Status , 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  
+  mutate(FE_Daily_enjoy = factor(FE_Daily_enjoy, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VHIGH", "HIGH", "MEDIUM", "LOW", "VLOW"),
+                             ordered = TRUE)) %>%
+  mutate(FE_Imp_quality = factor(FE_Imp_quality, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VHIGH", "HIGH", "MEDIUM", "LOW", "VLOW"),
+                             ordered = TRUE)) %>%
+  mutate(FE_Affect = factor(FE_Affect, 
+                             levels = c("A", "B", "C", "D", "E", "F", "G", "H"), 
+                             labels = c("COMFORT ABSENCE", "SAFETY ABSENCE", "POOR QUALITY OF STREETS", "CROWDNESS OF PASSENGERS", "DISABILITY OR REDUCED MOBILITY", "TRAVEL TIME", "ALL OF THEM", "OTHER"))) %>%
+  mutate(FE_Facility = factor(FE_Facility, 
+                             levels = c("A", "B", "C", "D", "E", "F", "G", "H"), 
+                             labels = c("COMFORT IMPROVEMENT", "SAFETY IMPROVEMENT", "BETTER QULALITY ON STREETS", "LESS CROWDNESS OF PASSENGERS", "IMPROVEMENT ON ACCESIBILITY", "REDUCTION OF TIME TRAVEL", "ALL OF THEM", "OTHER"))) 
+```
+
+Next one is going to be the reason and planning own decisions table that we need to select those variables starting with `r3`. So 
+Select (ID, starts_with("r3")): Selects the "ID" column and all columns that start with "r3" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r REASON AND PLANNING OWN DECISIONS}
+Santiago_RPD <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("RPD")) %>%
+  mutate(RPD_Access = factor(RPD_Access, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Acc_Employment = factor(RPD_Acc_Employment, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Family_vis = factor(RPD_Family_vis, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Rec_activity = factor(RPD_Rec_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Cult_activity = factor(RPD_Cult_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Sport = factor(RPD_Sport, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Groc_shopping = factor(RPD_Groc_shopping, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Social_activity = factor(RPD_Social_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NEVER", "RARELY", "SOMETIMES", "OFTEN", "ALWAYS"),
+                             ordered = TRUE)) %>%
+ mutate(RPD_Imp_Family_vis = factor(RPD_Imp_Family_vis, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Rec_activity = factor(RPD_Imp_Rec_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Cult_activity = factor(RPD_Imp_Cult_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Sport = factor(RPD_Imp_Sport, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"), 
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Groc_shopping = factor(RPD_Imp_Groc_shopping, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"), 
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Social_activity = factor(RPD_Imp_Social_activity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_Options = factor(RPD_Imp_Options, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"), 
+                             ordered = TRUE)) %>%
+  mutate(RPD_Trans_Quality = factor(RPD_Trans_Quality, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VLOW", "LOW", "MEDIUM", "HIGH", "VHIGH"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Inc_Quality = factor(RPD_Inc_Quality, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("VLOW", "LOW", "MEDIUM", "HIGH", "VHIGH"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Affordable_mode = factor(RPD_Affordable_mode, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H", "TODAS"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK", "ALL"))) %>%
+  mutate(RPD_Unaffordable_mode = factor(RPD_Unaffordable_mode, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H", "NINUNA"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK", "NONE"))) %>%
+  mutate(RPD_Imp_commercial = factor(RPD_Imp_commercial, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_dispon_mode = factor(RPD_Imp_dispon_mode, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_imprv_comfort = factor(RPD_Imp_imprv_comfort, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(RPD_Imp_othermodes = factor(RPD_Imp_othermodes, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) 
+  
+```
+
+Next one is going to be the social and interaction table that we need to select those variables starting with `r4`. So 
+Select (ID, starts_with("r4")): Selects the "ID" column and all columns that start with "r4" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r SOCIAL INTERACTION}
+Santiago_SI <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("SI")) %>%
+mutate(SI_Interactionlevel = factor(SI_Interactionlevel, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(SI_Imp_interaction = factor(SI_Imp_interaction, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(SI_Discrimination = factor(SI_Discrimination, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%
+  mutate(SI_Discrim_mode = factor(SI_Discrim_mode, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK")))
+```
+
+Next one is going to be the nature and sustainability table that we need to select those variables starting with `r5`. So 
+Select (ID, starts_with("r5")): Selects the "ID" column and all columns that start with "r5" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r NATURE _AND_ SUSTAINABILITY}
+Santiago_NS <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("NS")) %>%
+  mutate(NS_Change_mode = factor(NS_Change_mode, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%
+  mutate(NS_Change_type = factor(NS_Change_type, 
+                             levels = c("A", "B", "C","D", "E", "F", "G", "H"), 
+                             labels = c("CAR", "TAXI", "COLECTIVO", "MOTO", "METRO", "BUS","BICYCLE", "WALK"))) %>%
+  mutate(NS_Sustain_mode = factor(NS_Sustain_mode, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(NS_Imp_sustainmode = factor(NS_Imp_sustainmode, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(NS_Willing_pay_sustainmode = factor(NS_Willing_pay_sustainmode, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%
+  mutate(NS_Pay_sustaintype = factor(NS_Pay_sustaintype, 
+                             levels = c("A", "B", "c"), 
+                             labels = c("5-15%", "15-30%", "30% or more"),
+                             ordered = TRUE)) %>%
+  mutate(NS_Imp_tree = factor(NS_Imp_tree, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+    mutate(NS_Imp_park = factor(NS_Imp_park, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+    mutate(NS_Imp_imprv_sustainmode = factor(NS_Imp_imprv_sustainmode, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+    mutate(NS_Imp_increasesusmodes = factor(NS_Imp_increasesusmodes, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE))
+  
+```
+
+Next one is going to be the ITC and shifting table that we need to select those variables starting with `r6`. So 
+Select (ID, starts_with("r6")): Selects the "ID" column and all columns that start with "r6" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r ITC AND SHIFTING}
+Santiago_IS <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("IS")) %>%
+  mutate(IS_Shiftmode = factor(IS_Shiftmode, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%
+  mutate(IS_Qualityshift = factor(IS_Qualityshift, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(IS_Waitingtime = factor(IS_Waitingtime, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(IS_Shift_time = factor(IS_Shift_time, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(IS_Travel_time = factor(IS_Travel_time, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(IS_Difficulty_modechange = factor(IS_Difficulty_modechange, 
+                             levels = c("A", "B", "C","D", "E", "F", "G"), 
+                             labels = c("Bad physical conection in sidewalks", "Too long shifts", "Uncomfortable shifting", "Bad infrastructure for waiting times", "Unsafe shifting ", "All the previous ones","Other"))) %>%
+  mutate(IS_Techtool = factor(IS_Techtool, 
+                             levels = c("A", "B"), 
+                             labels = c("YES", "NO"))) %>%
+  mutate(IS_Info_techtool = factor(IS_Info_techtool, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(IS_Imp_techtool = factor(IS_Imp_techtool, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE))
+```
+
+Next one is going to be the built environment table that we need to select those variables starting with `r7`. So 
+Select (ID, starts_with("r7")): Selects the "ID" column and all columns that start with "r7" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r BUILT ENVIRONMENT}
+Santiago_BE <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("BE")) %>%
+mutate(BE_Autospace = factor(BE_Autospace, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Parking_num = factor(BE_Parking_num, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Quality_highway = factor(BE_Quality_highway, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Space_pedestrian = factor(BE_Space_pedestrian, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Quality_sidewalk = factor(BE_Quality_sidewalk, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Clean_busstop = factor(BE_Clean_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Seat_busstop = factor(BE_Seat_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Climateprotection_busstop = factor(BE_Climateprotection_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_cycloway_num = factor(BE_cycloway_num, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Quality_cycloway = factor(BE_Quality_cycloway, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Bikeshare = factor(BE_Bikeshare, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Autospace = factor(BE_Imp_Autospace, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Parking_num = factor(BE_Imp_Parking_num, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Quality_highway = factor(BE_Imp_Quality_highway, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Space_pedestrian = factor(BE_Imp_Space_pedestrian, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Quality_sidewalk = factor(BE_Imp_Quality_sidewalk, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Clean_busstop = factor(BE_Imp_Clean_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Seat_busstop = factor(BE_Imp_Seat_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Climateprotection_busstop = factor(BE_Imp_Climateprotection_busstop, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_cycloway_num = factor(BE_Imp_cycloway_num, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Quality_cycloway = factor(BE_Imp_Quality_cycloway, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) %>%
+  mutate(BE_Imp_Bikeshare = factor(BE_Imp_Bikeshare, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT IMPORTANT", "SLIGHTLY IMPORTANT", "MODERATELY IMPORTANT", "IMPORTANT", "VERY IMPORTANT"),
+                             ordered = TRUE)) 
+```
+
+Next one is going to be the travel to work information table that we need to select those variables starting with `r8`. So 
+Select (ID, starts_with("r8")): Selects the "ID" column and all columns that start with "r8" from the `SantiagoSurvey_trans` data frame.
+For label conversion we will do the same as previous table.
+
+```{r TRAVEL WORK}
+Santiago_TW <- SantiagoSurvey_trans %>%
+  dplyr::select(ID, starts_with("TW")) %>%
+mutate(TW_JobAccess = factor(TW_JobAccess, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NO IMPACT", "MINOR IMPACT", "SOME IMPACT", "MODERATE IMPACT", "MAJOR IMPACT"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Job_Opportunity = factor(TW_Job_Opportunity, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Interested_Access = factor(TW_Interested_Access, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("POOR", "FAIR", "GOOD", "VERY GOOD", "EXCELLENT"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Jobsatisfaction = factor(TW_Jobsatisfaction, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("NOT SATISFIED", "LOW SATISFIED", "MEDIUM SATISFIED", "HIGH SATIAFIED", "VHIGH SATISFIED"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Commute_duration = factor(TW_Commute_duration, 
+                             levels = c("A", "B", "C", "D"), 
+                             labels = c("0-20 min", "20-40 min", "40-60 min", "1h and more"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Commute_schedule = factor(TW_Commute_schedule, 
+                             levels = c("A", "B", "C", "D", "E", "F"), 
+                             labels = c("7:00 - 9:00", "9:00 - 13:00", "13:00 - 15:00", "15:00 - 18:00", "18:00 - 21:00", "Others"),
+                             ordered = TRUE)) %>%
+  mutate(TW_Commute_monthlycost = factor(TW_Commute_monthlycost, 
+                             levels = c("A", "B", "C", "D"), 
+                             labels = c("Less than 35.000", "35.000-75.000", "75.000-125.000", "More than 125.000"),
+                             ordered = TRUE)) 
+```
+
+# Saving data frames
+
+After making all tables apart and doing all the label conversion we need to save them into `data` folder. So steps are as follows: 
+The `usethis::use_data()` function is used to save each data frame (`Santiago_IC`, `Santiago_H`, ..., `comunas_1`) to the "data" folder.
+The `overwrite = TRUE` argument indicates that if a file with the same name already exists, it should be overwritten.
+
+```{r Saving Data Frames}
+
+usethis::use_data(Santiago_IC, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_H, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_FE, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_RPD, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_SI, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_NS, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_IS, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_BE, 
+                  overwrite = TRUE)
+usethis::use_data(Santiago_TW, 
+                  overwrite = TRUE)
+usethis::use_data(comunas_1, 
+                  overwrite = TRUE)
+```
+
+
+
+```{r}
+#Data summaries
+# for (i in 1:dim(A)[[2]])
+# {
+# a <- names(A)[[i]]
+# b <- A[[i]]
+# if (is.numeric(b) == TRUE)
+#   { 
+#   cat("Atributo No", i)
+#   print(a)
+#   print(summary(b))           # gives min, max, mean, median, 1st & 3rd quartiles
+#   print("")
+#   #min(b); max(b)       # }
+#   #range(b)             # } self-explanatory
+#   #mean(b); median(b)   # }
+#   #sd(b); mad(b)        # standard deviation, median absolute deviation
+#   }
+# }
+```
+
+
+
+```{r}
+# write.csv(comunas_1, file = 'C:/Users/nalaeen/Desktop/Master-Research/bSantiago/data-raw/comunas_1/comunas_1.csv')
+```
+
+```{r}
+# library(tidyverse)
+# library(sf)
+# 
+# comunas_1 <- st_read("C:/Users/nalaeen/Desktop/Master-Research/bSantiago/data-raw/comunas_1/comunas_1Polygon.shp")
+```
+
+```{r}
+# ggplot() +
+#   annotation_map_tile() +
+#   geom_sf(data = comunas_1,
+#           linewidth = 1,
+#           fill = NA)
+```
+
+
+```{r force = TRUE}
+# 
+# library(sf)
+# comunas_1 <- read_sf('C:/Users/nalaeen/Desktop/Master-Research/bSantiago/data-raw/comunas_1')
+# 
+# comunas_1 <- st_as_sf(comunas_1, coords = c("COORD_X", "COORD_Y"))
+# land <- st_read(dsn ="comunas_1")
+# st_crs(comunas_1) <- st_crs(land)
+# 
+# library(tmap)
+# 
+# tm_shape(land) +
+#   tm_polygons()
+# 
+# # Adding points of comunas
+# tm_shape(land) +
+#   tm_polygons() +
+#   tm_shape(comunas_1)+
+#   tm_symbols(size = 0.5)
+# 
+# #For Cartography
+# 
+# tm1 <- tm_shape(land) +
+#   tm_fill(col = "wheat") +
+#   tm_shape(comunas_1)+
+#   tm_symbols(size = 0.3, col = "cover",
+#              title.col = "Coral cover",
+#              palette = "Reds") +
+#   tm_compass(type = "4star", position = c(0.01, 0.67),
+#              size = 1.5) +
+#   #positions are between 0 & 1 and place the
+#   #bottom left corner
+#   tm_scale_bar(breaks = c(0, 10),
+#                position = c(0.65, 0.01),
+#                text.size = 0.6) +
+#   tm_layout(legend.position = c("right", "top"),
+#             legend.title.size = 0.8,
+#             bg.color = "lightblue") +
+#   tm_credits("Study sites from \nBrown and Hamilton 2018 \nConservation Biology. \nCoastline derived from Landsat.",
+#              size = 0.7, position = c(0.01, 0.01))
+```
+
+```{r}
+# ggplot() +
+#   geom_sf(data = comunas_1,color = "RED", fill = "wheat")+
+#   coord_sf(crs = 5361, datum = NA) +
+#   theme_void()
+# library(sfheaders)
+# library(ggplot2)
+# library(tmap)
+# library(janitor)
+# 
+# 
+# ggplot() +
+#   geom_sf(data = comunas_1, aes(fill = COMUNA), color = "black") +
+#   coord_sf(crs = 5361, datum = NA) +
+#   theme_void() +
+#   theme(legend.key.size = unit(0.2, "cm"))+
+#   theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm")) 
+#  
+# #SIRGAS-Chile 2002 / UTM zone 19S - EPSG:5361. #228B22
+```
+
+# Steps for splitting multiple answers in a single cell
+
+Now we need to solve a problem. The problem is having multiple choices stored in a single column. So we will use `multiSeparate` which is a function designed for splitting multiple answers stored in one cell into individual columns.
+
+```{r Preparing functions}
+multiSeparate <- function(df, vars, pattern, remove = FALSE, drop_ns = FALSE){
+    for (var in vars){
+        nselected <- paste0(var, "_nselected")
+        df <- (df
+            %>% rename(temp_multi = var)
+            %>% mutate(temp_nselected = sapply(
+                    regmatches(temp_multi, gregexpr(pattern, temp_multi))
+                    , length
+                ) + 1
+            )
+        )
+        # Max number of new variables to create
+        maxselected <- max(pull(df, temp_nselected))
+
+        # Create the new variable
+        df <- (df 
+            %>% separate("temp_multi"
+                , c(paste0(rep(var, maxselected), "_", 1:maxselected))
+                , sep = pattern
+                , remove = remove
+                , convert = TRUE
+            )
+            %>% rename_(.dots = setNames(c("temp_multi", "temp_nselected"), c(var, nselected)))
+        )
+        if(drop_ns){
+            df <- select(df, -c(grep("_nselected$", colnames(df), value = TRUE)))
+        }
+    }
+    return(df)
+}
+```
+
+Here we need to specify which columns we are going to use for this function to gain the separate answers:
+
+```{r}
+#choosing defected fields
+SantiagoSurvey <- readxl::read_xlsx(paste0(here(), "/data-raw/SantiagoSurvey2016.xlsx"))
+# file_path <- system.file("data", "SantiagoSurvey2016.xlsx", package = "bSantiago")
+# SantiagoSurvey2016 <- readxl::read_excel(file_path)
+
+r2AA_LIBERTAD <- SantiagoSurvey
+r2AB_INSEG <- SantiagoSurvey
+ SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AA_LIBERTAD_dummy1 = r2AA_LIBERTAD
+        , r2AA_LIBERTAD_dummy2 = gsub(" ", " ", r2AA_LIBERTAD)
+        , r2AA_LIBERTAD_dummy3 = gsub(" ", " ", r2AA_LIBERTAD)
+ ))
+ SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AB_INSEG_dummy1 = r2AB_INSEG
+       , r2AB_INSEG_dummy2 = gsub(" ", " ", r2AB_INSEG)
+       , r2AB_INSEG_dummy3 = gsub(" ", " ", r2AB_INSEG)
+))
+  SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AC_FUNCIONA_dummy1 = r2AC_FUNCIONA
+       , r2AC_FUNCIONA_dummy2 = gsub(" ", " ", r2AC_FUNCIONA)
+       , r2AC_FUNCIONA_dummy3 = gsub(" ", " ", r2AC_FUNCIONA)
+))
+   SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AD_ENTRET_dummy1 = r2AD_ENTRET
+       , r2AD_ENTRET_dummy2 = gsub(" ", " ", r2AD_ENTRET)
+       , r2AD_ENTRET_dummy3 = gsub(" ", " ", r2AD_ENTRET)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AE_COSTO_dummy1 = r2AE_COSTO
+       , r2AE_COSTO_dummy2 = gsub(" ", " ", r2AE_COSTO)
+       , r2AE_COSTO_dummy3 = gsub(" ", " ", r2AE_COSTO)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AF_POBREZ_dummy1 = r2AF_POBREZ
+       , r2AF_POBREZ_dummy2 = gsub(" ", " ", r2AF_POBREZ)
+       , r2AF_POBREZ_dummy3 = gsub(" ", " ", r2AF_POBREZ)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AG_SEGURIDAD_dummy1 = r2AG_SEGURIDAD
+       , r2AG_SEGURIDAD_dummy2 = gsub(" ", " ", r2AG_SEGURIDAD)
+       , r2AG_SEGURIDAD_dummy3 = gsub(" ", " ", r2AG_SEGURIDAD)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AH_TIEMPO_dummy1 = r2AH_TIEMPO
+       , r2AH_TIEMPO_dummy2 = gsub(" ", " ", r2AH_TIEMPO)
+       , r2AH_TIEMPO_dummy3 = gsub(" ", " ", r2AH_TIEMPO)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AI_IMPUNT_dummy1 = r2AI_IMPUNT
+       , r2AI_IMPUNT_dummy2 = gsub(" ", " ", r2AI_IMPUNT)
+       , r2AI_IMPUNT_dummy3 = gsub(" ", " ", r2AI_IMPUNT)
+)) 
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AJ_CONGEST_dummy1 = r2AJ_CONGEST
+       , r2AJ_CONGEST_dummy2 = gsub(" ", " ", r2AJ_CONGEST)
+       , r2AJ_CONGEST_dummy3 = gsub(" ", " ", r2AJ_CONGEST)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AK_EFICIENC_dummy1 = r2AK_EFICIENC
+       , r2AK_EFICIENC_dummy2 = gsub(" ", " ", r2AK_EFICIENC)
+       , r2AK_EFICIENC_dummy3 = gsub(" ", " ", r2AK_EFICIENC)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AL_LUJO_dummy1 = r2AL_LUJO
+       , r2AL_LUJO_dummy2 = gsub(" ", " ", r2AL_LUJO)
+       , r2AL_LUJO_dummy3 = gsub(" ", " ", r2AL_LUJO)
+)) 
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AM_AMBIENT_dummy1 = r2AM_AMBIENT
+       , r2AM_AMBIENT_dummy2 = gsub(" ", " ", r2AM_AMBIENT)
+       , r2AM_AMBIENT_dummy3 = gsub(" ", " ", r2AM_AMBIENT)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AN_SALUD_dummy1 = r2AN_SALUD
+       , r2AN_SALUD_dummy2 = gsub(" ", " ", r2AN_SALUD)
+       , r2AN_SALUD_dummy3 = gsub(" ", " ", r2AN_SALUD)
+)) 
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AO_INTSOCI_dummy1 = r2AO_INTSOCI
+       , r2AO_INTSOCI_dummy2 = gsub(" ", " ", r2AO_INTSOCI)
+       , r2AO_INTSOCI_dummy3 = gsub(" ", " ", r2AO_INTSOCI)
+))       
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AP_INCOM_dummy1 = r2AP_INCOM
+       , r2AP_INCOM_dummy2 = gsub(" ", " ", r2AP_INCOM)
+       , r2AP_INCOM_dummy3 = gsub(" ", " ", r2AP_INCOM)
+)) 
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AQ_FELICID_dummy1 = r2AQ_FELICID
+       , r2AQ_FELICID_dummy2 = gsub(" ", " ", r2AQ_FELICID)
+       , r2AQ_FELICID_dummy3 = gsub(" ", " ", r2AQ_FELICID)
+)) 
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AR_ESTAT_dummy1 = r2AR_ESTAT
+       , r2AR_ESTAT_dummy2 = gsub(" ", " ", r2AR_ESTAT)
+       , r2AR_ESTAT_dummy3 = gsub(" ", " ", r2AR_ESTAT)
+)) 
+      
+#r2B_DISFRUT and r2C_IMPORT were numerical and didn't need to modify.
+
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2AR_ESTAT_dummy1 = r2D_AFECTA
+       , r2AR_ESTAT_dummy2 = gsub(" ", " ", r2D_AFECTA)
+       , r2AR_ESTAT_dummy3 = gsub(" ", " ", r2D_AFECTA)
+))
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r2E_FACILIT_dummy1 = r2E_FACILIT
+       , r2E_FACILIT_dummy2 = gsub(" ", " ", r2E_FACILIT)
+       , r2E_FACILIT_dummy3 = gsub(" ", " ", r2E_FACILIT)
+))
+# Starting with r3
+      
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r3H_ECON_dummy1 = r3H_ECON
+       , r3H_ECON_dummy2 = gsub(" ", " ", r3H_ECON)
+       , r3H_ECON_dummy3 = gsub(" ", " ", r3H_ECON)
+))      
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r3I_NOECON_dummy1 = r3I_NOECON
+       , r3I_NOECON_dummy2 = gsub(" ", " ", r3I_NOECON)
+       , r3I_NOECON_dummy3 = gsub(" ", " ", r3I_NOECON)
+))
+# Starting with r4      
+      
+      SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r4D_MODO_dummy1 = r4D_MODO
+       , r4D_MODO_dummy2 = gsub(" ", " ", r4D_MODO)
+       , r4D_MODO_dummy3 = gsub(" ", " ", r4D_MODO)
+))
+# Starting with r5
+            SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r5B_CAMBIO_dummy1 = r5B_CAMBIO
+       , r5B_CAMBIO_dummy2 = gsub(" ", " ", r5B_CAMBIO)
+       , r5B_CAMBIO_dummy3 = gsub(" ", " ", r5B_CAMBIO)
+))
+# Starting with r6 
+                 SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r6D_DIFICULTA_dummy1 = r6D_DIFICULTA
+       , r6D_DIFICULTA_dummy2 = gsub(" ", " ", r6D_DIFICULTA)
+       , r6D_DIFICULTA_dummy3 = gsub(" ", " ", r6D_DIFICULTA)
+))      
+# Starting with r8
+                 SantiagoSurvey2016 <- (SantiagoSurvey
+%>% mutate(r8F_HORARIOS_dummy1 = r8F_HORARIOS
+       , r8F_HORARIOS_dummy2 = gsub(" ", " ", r8F_HORARIOS)
+       , r8F_HORARIOS_dummy3 = gsub(" ", " ", r8F_HORARIOS)
+))                 
+                 
+      multi_vars <- grep("r2AA_LIBERTAD|r2AB_INSEG|r2AC_FUNCIONA|r2AD_ENTRET|r2AE_COSTO|r2AF_POBREZ|r2AG_SEGURIDAD|r2AH_TIEMPO|r2AI_IMPUNT|r2AJ_CONGEST|r2AK_EFICIENC|r2AL_LUJO|r2AM_AMBIENT|r2AN_SALUD|r2AO_INTSOCI|r2AP_INCOM|r2AQ_FELICID|r2AR_ESTAT|r2D_AFECTA|r2E_FACILIT|r3H_ECON|r3I_NOECON|r4D_MODO|r5B_CAMBIO|r6D_DIFICULTA|r8F_HORARIOS", colnames(SantiagoSurvey), value = TRUE)
+
+
+              # grep("^r2AB_INSEG", colnames(SantiagoSurvey2016), value = TRUE)%>% 
+              # grep("^r2AC_FUNCIONA", colnames(SantiagoSurvey2016), value = TRUE)
+  # grep("r2AA_LIBERTAD", SantiagoSurvey2016, value = TRUE) %>% 
+  #             grep("r2AB_INSEG" , SantiagoSurvey2016, value = TRUE) %>% 
+  #             grep("r2AC_FUNCIONA" ,SantiagoSurvey2016, value = TRUE)
+print("All multiple respnse variables")
+```
+
+```{r}
+multi_vars
+```
+
+```{r}
+library(DT)
+library(dplyr)
+library(tidyr)
+
+SantiagoSplit <- (SantiagoSurvey
+    %>% multiSeparate(vars = multi_vars, pattern = "", remove = FALSE, drop_ns = FALSE)
+    %>% datatable(., rownames = FALSE, options = list(scrollX = TRUE))
+)
+SantiagoSplit
+```
+
+
+```{r save survey answers in csv format}
+library(readxl)
+library(here)
+
+# Specify the path to your Excel file
+excel_file <- here("data-raw", "SantiagoSurvey2016.xlsx")
+
+# Read the Excel file into R
+data <- read_excel(excel_file)
+
+# Specify the path for the CSV file
+csv_file <- here("data-raw", "SantiagoSurvey2016.csv")
+
+# Write the data to a CSV file
+write.csv(data, file = csv_file, row.names = FALSE)
+
+# Print a message indicating the conversion is complete
+cat("Excel file has been successfully converted to CSV format.\n")
+
+```
+
+```{r save survey questions in csv format}
+library(readxl)
+library(here)
+
+# Specify the path to your Excel file
+excel_file2 <- here("data-raw", "SantiagoSurvey2016-Survey-Questions-and-Dictionary.xlsx")
+
+# Read the Excel file into R
+data2 <- read_excel(excel_file2)
+
+# Specify the path for the CSV file
+csv_file2 <- here("data-raw", "SantiagoSurvey2016-Survey-Questions-and-Dictionary.csv")
+
+# Write the data to a CSV file
+write.csv(data2, file = csv_file2, row.names = FALSE)
+
+# Print a message indicating the conversion is complete
+cat("Excel file has been successfully converted to CSV format.\n")
+
+```
+
+
+
+# How this process contributes to reproducibility?
+
+Having the answers separated into distinct columns, let future researchers gain flexibility in analyzing the data and generating tables tailored to their research questions or goals. The specific analyses and tables created will depend on the nature of the data and the research objectives. 
+
+When starting from scratch after splitting and reshaping the data, researchers can use various techniques for a more granular analysis of individual responses and choosing the specific answer among multiple ones in a single cell.
+
+One idea is using frequency tables as they can observe the occurrences of each response for each split variable useful in understanding the distribution of the response.
+
+Second way is to take advantage of cross-tabulations for split variables against each other, as it gives insights about relationships and patterns in the data.
+
+Also calculating summary statistics for each split variable allows us to understand central tendency and variability. There are many other ways in this regard to specify the appropriate answer out of multiple ones like visualization, comparisons and tests, data exploration and so on.
+
+
+When starting from the raw data and following the same preprocessing and analysis steps, researchers could generally end up with similar tables and results. However, several factors can influence whether the results are exactly the same such as differences in data cleaning and handling missing data, parameters or thresholds according to the analysis, random sampling (if applicable).
+
+In summary, while exact replication is not always guaranteed, careful documentation, consistency in preprocessing, and transparent reporting of analysis steps contribute to the reproducibility of results. Additionally, using github repository and sharing code can facilitate collaboration and make it easier for future researchers to reproduce the results.
+
+

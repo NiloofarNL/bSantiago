@@ -1,0 +1,273 @@
+
+
+## Using bivariate ordinal model to evaluate the relation between stress level and its importance regarding income level, age, gender and mode of transportation:
+
+```{r load-packages, message=FALSE}
+library(bSantiago)
+library(ggmap)
+library(ggplot2)
+library(ggridges) # Package for plotting ridgelines in ggplot2
+library(kableExtra) # Package for creating tables
+library(mvord) # Package for estimation of multivariate ordinal regression models
+library(ordinal) # Package for estimation of discrete choice models
+library(plyr) # Tools for Splitting, Applying and Combining Data
+library(tidyverse) # Includes {dplyr} (for data manipulation) and {ggplot2} (for plotting)
+```
+
+#Following loading the data, independent and dependent variables have been selected then their NA values have been dropped
+<!--
+```{r}
+SantiagoSurvey <- read_excel("SantiagoSurvey2016.xlsx")
+
+SantiagoSelect <- dplyr::select ( SantiagoSurvey,r1A_ESTRES,r1GA_ESTRES,r0D_EDAD,r0C_GENERO,r0J_INGRESO,r0P_MODO1,r8E_TIEMPO)
+SanDrop <- drop_na(SantiagoSelect)
+
+```
+
+```{r}
+
+# SanDrop$r0C_GENERO <- relevel(SanDrop$r0C_GENERO, ref = "r0C_GENERO")
+SanDrop$FEMALE <- ifelse (SanDrop$r0C_GENERO == "Famale", 1, 0)
+SanDrop$MALE <- ifelse (SanDrop$r0C_GENERO == "Male", 1, 0)
+
+
+#SanDrop$r0D_EDAD <-factor("Less18", levels = c("Less18", "18to24", "25to34", "35to54", "55to64", "65more"), ordered = TRUE)
+# SanDrop$r0D_EDAD <- relevel(SanDrop$r0D_EDAD, ref = "")
+SanDrop$Less18 <- ifelse (SanDrop$r0D_EDAD == "Less18", 1, 0)
+SanDrop$From18to24 <- ifelse (SanDrop$r0D_EDAD == "18to24", 1, 0)
+SanDrop$From25to34 <- ifelse (SanDrop$r0D_EDAD == "25to34", 1, 0)
+SanDrop$From35to54 <- ifelse (SanDrop$r0D_EDAD == "35to54", 1, 0)
+SanDrop$From55to64 <- ifelse (SanDrop$r0D_EDAD == "55to64", 1, 0)
+SanDrop$more65 <- ifelse (SanDrop$r0D_EDAD == "65more", 1, 0)
+
+# SanDrop$r0J_INGRESO <-factor("Less423", levels = c("Less423", "423to639", "639to977", "977to1550", "1550to2380", "2380more"), ordered = TRUE)
+# SanDrop$r0J_INGRESO <- relevel(SanDrop$r0J_INGRESO, ref = "Less423")
+SanDrop$Less423 <- ifelse (SanDrop$r0J_INGRESO == "Less423", 1, 0)
+SanDrop$From423to639 <- ifelse (SanDrop$r0J_INGRESO == "423to639", 1, 0)
+SanDrop$From639to977 <- ifelse (SanDrop$r0J_INGRESO == "639to977", 1, 0)
+SanDrop$From977to1550 <- ifelse (SanDrop$r0J_INGRESO == "977to1550", 1, 0)
+SanDrop$From1550to2380 <- ifelse (SanDrop$r0J_INGRESO == "1550to2380", 1, 0)
+SanDrop$From2380more <- ifelse (SanDrop$r0J_INGRESO == "2380more", 1, 0)
+
+# SanDrop$r8E_TIEMPO <-factor("0-20 min", levels = c("0-20 min", "20-40 min", "40-60 min", "1h and more"), ordered = TRUE)
+# SanDrop$r8E_TIEMPO <- relevel(SanDrop$r8E_TIEMPO, ref = "0-20 min")
+SanDrop$Between0to20 <- ifelse (SanDrop$r8E_TIEMPO == "0-20 min", 1, 0)
+SanDrop$Between20to40 <- ifelse (SanDrop$r8E_TIEMPO == "20-40 min", 1, 0)
+SanDrop$Between40to60  <- ifelse (SanDrop$r8E_TIEMPO == "40-60 min", 1, 0)
+SanDrop$More1h <- ifelse (SanDrop$r8E_TIEMPO == "1h and more", 1, 0)
+```
+
+```{r}
+mod_bivariate <- mvord(formula = MMO2(r1A_ESTRES, r1GA_ESTRES) ~ 0 + r0D_EDAD + r0C_GENERO +
+                         r0J_INGRESO + r8E_TIEMPO + 
+                         r0P_MODO1, 
+                       link = mvlogit(df = 8L),
+                       # {mvord} does not like tbl or tbl_df objects:
+                       # convert to plain data.frame
+                       data = SanDrop |> mutate(r1A_ESTRES = factor(r1A_ESTRES, ordered = TRUE),
+                                                r1GA_ESTRES = factor(r1GA_ESTRES, ordered = TRUE)))
+summary(mod_bivariate)
+```
+
+
+
+```{r}
+library(bSantiago)
+data("Santiago_H")
+```
+-->
+
+#Null model:
+
+```{r}
+mod_bivariate <- mvord(formula = MMO2(r1A_STRESS, r1GA_IMPSTRESS) ~ 0, 
+                       link = mvlogit(df = 8L),
+                       # {mvord} does not like tbl or tbl_df objects:
+                       # convert to plain data.frame
+                       data = as.data.frame(Santiago_H))
+summary(mod_bivariate)
+```
+
+
+
+```{r}
+data("Santiago_IC")
+
+df <- Santiago_H |>
+  left_join(Santiago_IC,
+            by = "ID") |>
+  as.data.frame() |>
+  drop_na(r0D_AGE,
+          r0J_INCOME,
+          r0G_EDUCATION,
+          r0P_MODE1) 
+```
+
+```{r}
+# Generate some example data
+set.seed(123)
+df <- sample(1:100, size = 1e7, replace = TRUE)
+
+# Convert to a factor with 10 levels
+df <- cut(df, breaks = 10)
+
+# Create a frequency table of the factor
+freq_table <- table(df)
+
+```
+
+
+```{r}
+mod_bivariate <- mvord(formula = MMO2(r1A_STRESS, r1GA_IMPSTRESS) ~ 0 + r0D_AGE + r0J_INCOME + r0P_MODE1 + r0G_EDUCATION,  
+                    
+                       link = mvlogit(df = 8L),
+                       # {mvord} does not like tbl or tbl_df objects:
+                       # convert to plain data.frame
+                       data = as.data.frame(df))
+summary(mod_bivariate)
+```
+
+#resetting the outcomes of each variable to see the efficient result
+```{r}
+
+df <- Santiago_H |>
+  left_join(Santiago_IC,
+            by = "ID") |>
+  as.data.frame() |>
+  drop_na(r0D_AGE,
+          r0J_INCOME,
+          r0G_EDUCATION,
+          r0P_MODE1,
+          r0H_OCCUPATION ) 
+  
+
+df <- df %>%  mutate(r0J_INCOME = recode_factor(r0J_INCOME,
+                                  "Less423" = "Low Income",
+                                  "423to639" = "Low Income",
+                                  "639to977" = "Middle Income",
+                                  "977to1550" = "Middle Income",
+                                  "1550to2380" = "High Income",
+                                  "2380more" = "High Income"))  %>%
+  # mutate(r0D_AGE = recode_factor(r0D_AGE,
+  #                                 "Less18" = "Youth and Children",
+  #                                 "18to24" = "Youth and Children",
+  #                                 "25to34" = "Youth and Children",
+  #                                 "35to54" = "Adults",
+  #                                 "55to64" = "Adults",
+  #                                 "65more" = "Adults"))  %>%
+    mutate(r0D_AGE = recode_factor(r0D_AGE,
+                                  "Less18" = "Youth",
+                                  "18to24" = "Youth",
+                                  "25to34" = "Youth",
+                                  "35to54" = "Adults",
+                                  "55to64" = "Seniors",
+                                  "65more" = "Seniors"))  %>%
+  mutate(r0P_MODE1 = recode_factor(r0P_MODE1,
+                                  "CAR" = "Private Transportation",
+                                  "MOTO" = "Private Transportation",
+                                  "TAXI" = "Public Transportation",
+                                  "COLECTIVO" = "Public Transportation",
+                                  "METRO" = "Public Transportation",
+                                  "BUS" = "Public Transportation",
+                                  "BICYCLE" = "Active Transportation",
+                                  "WALK" = "Active Transportation")) %>%
+  # mutate(r0P_MODE1 = recode_factor(r0P_MODE1,
+  #                                 "CAR" = "Motorized Transportation",
+  #                                 "MOTO" = "Motorized Transportation",
+  #                                 "TAXI" = "Motorized Transportation",
+  #                                 "COLECTIVO" = "Motorized Transportation",
+  #                                 "METRO" = "Motorized Transportation",
+  #                                 "BUS" = "Motorized Transportation",
+  #                                 "BICYCLE" = "Active Transportation",
+  #                                 "WALK" = "Active Transportation")) %>%
+  # mutate(r0G_EDUCATION = recode_factor(r0G_EDUCATION,
+  #                                 "ELEMENTARY" = "Elementary Education",
+  #                                 "SECUNDARY" = "Middle Education",
+  #                                 "PROFESS_TECH" = "Middle Education",
+  #                                 "COLLEGE" = "Middle Education",
+  #                                 "POSTGRAD" = "Higher Education"))
+mutate(r0G_EDUCATION = recode_factor(r0G_EDUCATION,
+                                  "ELEMENTARY" = "Elementary Education",
+                                  "SECUNDARY" = "Higher Education",
+                                  "COLLEGE" = "Higher Education",
+                                  "PROFESS_TECH" = "Higher Education",
+                                  "POSTGRAD" = "Higher Education"))  %>%
+  
+mutate(r0H_OCCUPATION = recode_factor(r0H_OCCUPATION,
+                                  "FULL_TIME" = "Working",
+                                  "PART_TIME" = "Working",
+                                  "SELF_EMPLOYED" = "Working",
+                                  "UNEMPLOYED" = "Not Working",
+                                  "HOME_TAKER" = "Not Working",
+                                  "STUDENT" = "Student",
+                                  "STUDENT_WORK" = "Working",
+                                  "RETIRED" = "Not Working",
+                                  "OTHER" = "Non Professional"))
+
+   # df$r0C_SEX <- relevel(df$r0C_SEX, ref = "MAN")
+   df$r0P_MODE1 <- relevel(df$r0P_MODE1, ref = "Active Transportation")
+   df$r0D_AGE <- relevel(df$r0D_AGE, ref = "Youth")
+   df$r0J_INCOME <- relevel(df$r0J_INCOME, ref = "Low Income")
+   df$r0G_EDUCATION <- relevel(df$r0G_EDUCATION, ref = "Elementary Education")
+   df$r0M_DISABILITY <- relevel(df$r0M_DISABILITY, ref = "YES")
+   df$r0H_OCCUPATION <- relevel(df$r0H_OCCUPATION, ref = "Not Working")
+  
+ 
+```
+
+```{r}
+mod_bivariate <- mvord(formula = MMO2(r1A_STRESS, r1GA_IMPSTRESS) ~ 0 + r0D_AGE + r0J_INCOME + r0P_MODE1 + r0G_EDUCATION + r0H_OCCUPATION  ,
+                       link = mvlogit(df = 8L),
+                       # {mvord} does not like tbl or tbl_df objects:
+                       # convert to plain data.frame
+                       data = df)
+summary(mod_bivariate)
+
+```
+
+```{r}
+formula <- MMO2(r1A_STRESS, r1GA_IMPSTRESS) ~ 0 + r0D_AGE + r0J_INCOME + r0P_MODE1 + r0G_EDUCATION + r0H_OCCUPATION  
+names_constraints(formula, data = df)
+coef.constraints = cbind(c(NA, 1), # Adults
+                         c(1, NA), # Seniors
+                         c(1, 2), # Middle Income
+                         c(1, NA), # High Income
+                         c(1, NA), # Private Transportation
+                         c(1, NA), # Public Transportation
+                         c(NA, 1), # Higher Education
+                         c(1, NA), # Working
+                         c(1, NA), # Student
+                         c(NA, NA)) #Non Professional
+
+mod_bivariate <- mvord(formula = MMO2(r1A_STRESS, r1GA_IMPSTRESS) ~ 0 + r0D_AGE + r0J_INCOME + r0P_MODE1 + r0G_EDUCATION + r0H_OCCUPATION  ,
+                       link = mvlogit(df = 8L),
+                       coef.constraints = coef.constraints,
+                       # {mvord} does not like tbl or tbl_df objects:
+                       # convert to plain data.frame
+                       data = df)
+summary(mod_bivariate)
+
+
+```
+
+# writing the summary of desctiptive 
+
+```{r}
+library(bSantiago)
+library(vtable)
+
+
+data(df)
+st(df, vars = c('r1A_STRESS','r1GA_IMPSTRESS', 'r0D_AGE', 'r0J_INCOME', 'r0P_MODE1', 'r0G_EDUCATION', 'r0H_OCCUPATION'))
+
+sumtable(df,
+         summ=c('Min(x)',
+                'Max(x)',
+                'Mode(x)',
+                'Median(x)',
+                'Range(x)',
+                'IQR(x)'))
+
+st(df, group = NA , group.long = TRUE, out='return')
+
+```

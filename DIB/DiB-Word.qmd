@@ -1,0 +1,1022 @@
+---
+title: "A dataset to study transportation, residential context, and well-being in Santiago, Chile"
+author: "Niloofar Nalaee, Beatriz Mella Lira, Antonio Paez"
+bibliography: references.bib
+format:
+  docx:
+    reference-doc: custom-reference-doc.docx
+---
+
+
+```{r loading package, include=FALSE}
+
+install.packages("remotes")
+remotes::install_github("paezha/bSantiago")
+install.packages("here")
+library(bSantiago)
+library(sf)
+library(readxl)
+library(dplyr)
+library(here)
+library(glue)
+library(dplyr) # A Grammar of Data Manipulation
+library(skimr) # Compact and Flexible Summaries of Data
+library(stringr) # Simple, Consistent Wrappers for Common String Operations
+library(ggplot2)
+library(reshape2)
+library(plyr)
+```
+
+
+```{r load-data}
+#| label: load-data
+#| include: false
+data("Santiago_BE")
+data("Santiago_FE")
+data("Santiago_H")
+data("Santiago_IC")
+data("Santiago_IS")
+data("Santiago_NS")
+data("Santiago_RPD")
+data("Santiago_SI")
+data("Santiago_TW")
+data("comunas_1")
+```
+
+# Abstract
+
+Large-scale travel surveys are invaluable sources of information to understand travel behavior and other aspects of the urban experience, such as residential context. By their nature, they often shy away from overloading respondents with additional questions. The data presented in this article result from an effort to purposefully collect data on various aspects of the experience of living and moving in a major city in the Global South. The data set contains essential socio-economic and demographic information about the respondents, as well as their built environment and behaviors commuting to work. In addition, the survey (conducted between DATE-DATE, 2016) includes information about the respondents' feelings and emotions in relation to their commuting experience, the social experience of a variety of transportation modes, various self-assessed health questions, patterns of use of information and telecommunication technologies, and questions about sustainability and the environment. The survey was adopted a quota-sampling method that used the Pre-Census of 2012 as a frame, and in total includes 451 validated questionnaires.
+
+<!-- what do we mean by validated -->
+
+<!--
+
+The data set presented in this article would be advantageous to give intuition about the experience of daily travel and its psychological impact on travelers, ranging from positive feelings of enjoyment in some to the sensation of stress in many others. This dataset particularly examines the feelings of stress by users of active and motorized modes of transportation. Furthermore, it also investigates the importance that travelers attach to their feelings of stress. This allows us to explore the concept of “limited horizons”, the normalization of subpar experiences by those less able to adapt. Moreover, it is about the functioning, freedom and an appropriate environment for human beings to be flourished and refers to the actual ability that people have and can do [@walker2005amartya]. According to the capability approach, functioning is the achievement while the capability is the ability to achieve[@rajapakse2016amartya]. This data provides information about commuters in terms of their individual characteristics, health-related factors while using transportation modes, feelings and emotions towards different modes of travel, own decisions, social interaction, attitudes towards nature and sustainability, shifts between modes, attitudes towards built environment, traveling to work. Data for the research are drawn from a survey conducted in Santiago, Chile, based on a quota-sampling method based on the information from Pre-Census of 2012, and in total, 451 persons validly completed the survey. Describe the statistics and conclude suggest that
+-->
+
+## Key words 
+
+- Transportation
+- Commuting to work
+- Built environment
+- Well-being
+- Equity
+- Santiago
+- Chile
+
+## Specifications Table
+
+See @tbl-specifications for details of the data set.
+
+| Items | Explanation |
+|:--------|:-----|
+| Subject area      | Transportation, Geography, Public Health and Health Policy, Urban development   |
+| More specific subject area     | Transport inequalities, Stress and limited horizons, Travel behavior, Global South  |
+| Type of data       | `R` Data Package    |
+| How data was acquired | The survey was conducted using a (pen-and-paper??) questionnaire. The instrument contains some quantitative variables regarding the individual characteristics of respondents and mostly 5-point Likert scale responses in the rest of the questionnaire|
+| Data format | Thematic tables and documentation in native `R` format. The thematic tables can be linked by means of a common `ID` field | 
+| Parameters for data collection | The survey was collected using a quota-sampling method based on the information from Pre-Census of 2012, and in total, 451 persons validly completed the survey and face-to-face in Santiago, Chile in 2016. The survey collected information on a wide range of travel-related issues (socio-demographics, health-related, perceptions and travel behavior, travel choices and planning, social interaction factors, built environment, among others) |
+| Description of data collection | Data was acquired through the 5-Likert scale questionnaire regarding most sections of the questionnaire, using a face-to-face and quota-sampling method for individual characteristics  | 
+| Data source location | Santiago, Chile | 
+| Data accessibility | https://paezha.github.io/bSantiago/ | 
+
+: Specifications table {#tbl-specifications}
+
+## Value of the data 
+
+A large body of the data has made inroads investigating psychological impact on travelers ranging from positive feelings of enjoyment in some to the sensation of stress in many others that can affect the effectiveness of policy measure (in the case of positive feelings) and are known to affect health outcomes (in the case of stress).This would be interesting for those with transport policies concerns as public feelings like happiness and satisfaction rating of travel mode switching has been studied previously [@abou2012happiness].
+Data set contribute to psychological impact on travelers both active and motorized modes of transportation to examines not only the feeling of stress, but also how these effects are experienced by travelers and investigates the importance that travelers attach to their feelings of stress which makes it valuable for researchers who focused on public sector development and health-related policies.
+It allows us to realize the concept of “limited horizons” and focus on developing people's capability to select what they have their reason behind it. Furthermore, it would be advantageous for decision makers to evaluate their attempts to flourish well-being by expanding capabilities in further research regarding transport inequalities, index of stress, travel behavior in the region or even as a representative for other areas with similar attributes[@walker2005amartya].
+The dataset provides a wide range of travel-related issues such as socio-demographics, health-related, perceptions and travel behavior, travel choices and planning, social interaction factors, built environment, among others.  
+
+## Data
+ 
+The data package described in this paper contains 9 data objects in tabular format, which are listed in @tbl-list-of-tables. Each object corresponds to a theme and includes information about the individual characteristics, travel-to-work related information, and perceptions of the built environment. Furthermore, other themes include social interactions by mode of transportation, mode shifting and use of information technologies, a number of self-assessed health responses, feelings and emotions as they relate to the commute experience, attitudes with respect to how well transportation systems satisfy the needs of respondents, and attitudes about nature and sustainability. As seen in @tbl-list-of-tables, the number of variables in these tables ranges from 5 to 24. The tables share a common unique identifier (`ID`) that can be used to link several tables in a consistent way for multi-theme analysis of the data.
+
+| Table | Theme |
+|:--------|:-----|
+| Santiago_IC      | A table with `r ncol(Santiago_IC)` variables that describe the individual characteristics of respondents   |
+| Santiago_TW     | A table with `r ncol(Santiago_TW)` variables regarding the commuting behavior of respondents  |
+| Santiago_SI     | A table with `r ncol(Santiago_SI)` variables about social interaction by mode of transportation |
+| Santiago_IS     | A table with `r ncol(Santiago_IS)` variables related to mode-shifting and use of information technologies  |
+| Santiago_BE  | A table with `r ncol(Santiago_BE)` variables about built environment at the place of residence of respondents  |
+| Santiago_H     | A table with `r ncol(Santiago_H)` variables about health attributes of respondents  |
+ Santiago_FE     | A table with `r ncol(Santiago_FE)` variables with information about the feelings and emotions of respondents  |
+| Santiago_RPD     | A table with `r ncol(Santiago_RPD)` variables with information about attitudes with respect to the effectiveness of the transportation system  |
+| Santiago_NS     | A table with `r ncol(Santiago_NS)` attitudinal variables that refer to nature and sustainability aspects of city  |
+
+: List of tables in data package {#tbl-list-of-tables}
+
+The theme of table `Santiago_IC` is the individual characteristics of respondents and includes several essential socio-economic and demographic attributes. @tbl-individual-characteristics-descriptives) presents a summary of these variables, including information about the neighborhood of residence of respondents. All respondents were successfully geolocated to the level of Communes (large administrative partitions equivalent to municipalities) and Macro Zones (larger aggregations of communes used for descriptive purposes). The street address information is less complete. The place of work (geocoded at the level of Communes) is missing only in a small number of cases (complete rate 0.96) and few respondents report a _second_ place of work/studies where they travel (`r01_WORK_COM_2`).
+
+As seen in the table, most respondents' information is quite complete. Only 16 respondents reported facing some disability, and of these only 11 completed the section asking them about the type (`r0O_TYPE_DIS`). In terms of gender, the sample includes approximately 15.7\% more women than men. 
+
+**BEA:** PLEASE COMMENT ON THE DISTRIBUTION OF AGES, EDUCATION, OCCUPATION, AND INCOME; ALSO, IS THE VARIABLE MONTHLY OR ANNUAL INCOME? HOW WHERE THE LEVELS/CUTS FOR INCOME SELECTED? ARE THE UNITS IN PESOS OR 1,000 PESOS?
+
+**BEA:** r0P_MODE_1 IS PRIMARY MODE? AND r0Q_MODE_2 AND r0R_MODE_3 ARE SUBSEQUENT MODES FOR THE SAME TRIP? OR MODES USED IN TERMS OF DECREASING FREQUENCY?
+
+Other variables regarding the respondents include their height (cm) and weight (kg), and the household context in terms of number of adults (between 1 and 7) and minors in the family (75% of respondents report no children, and of the remainder the number of children varies between 1 and 6).
+
+These variables provide insights about different segments of the population. In terms of place of residence (**BEA:** ARE ALL COMMUNES URBAN? IS THERE AN URBAN-RURAL INTERFACE?). 
+
+<!-- there should be a more specified classification than in urban, semi-rural and rural areas regarding different transportation options that they might have[@bergstad2011affective]. Also this part would be advantageous for business developments to figure out marketing and apply strategies for future patterns based on consumer demands.-->
+
+```{r Summary-individual-characteristics}
+#| tbl-cap: Variables regarding individual characteristics of respondents
+#| tbl-cap-location: top
+#| label: tbl-individual-characteristics-descriptives
+#| echo: false
+
+#skim(Santiago_IC)
+skim_IC <- Santiago_IC |>
+  select(-ID) |>
+  skim()
+
+skim_IC$factor.top_counts[9] <- skim_IC$factor.top_counts[9] |>
+  str_replace_all(c("35t" = "35 to 54", 
+                    "18t" = "18 to 24",
+                    "25t" = "25 to 34",
+                    "55t" = "55 to 64"))
+
+skim_IC$factor.top_counts[12] <- skim_IC$factor.top_counts[12] |>
+  str_replace_all(c("977" = "977 to 1,550", 
+                    "238" = "2,380 or more",
+                    "Les" = "Less than 423",
+                    "155" = "1,550 to 2,380"))
+
+skim_IC
+```
+
+```{r}
+library(bSantiago)
+library(here)
+library(readxl)
+
+par(mfrow=c(1,2))
+
+# Age and Gender Bar Graph
+SantiagoSurvey2016 <- readxl::read_xlsx(paste0(here(), "/data-raw/SantiagoSurvey2016.xlsx"))
+  
+  
+ggplot(SantiagoSurvey2016,aes(x=factor(r0D_EDAD), fill=factor(r0C_GENERO)))+
+  geom_bar(position="dodge")+
+  scale_x_discrete("Age Groups", 
+                   labels=c("A"="Less18","B"="18-24","C"="25-34",
+                            "D"="35-54","E"="55-64","F"="65+"))+
+  scale_fill_discrete(name="Gender",
+                      breaks=c("A", "B"),
+                      labels=c("Female", "Male"))+
+  ggtitle("Age Groups by Gender")+
+  ylab('No. of People')
+
+
+# Education bar graph
+qplot(as.factor(SantiagoSurvey2016$r0G_EDUCACION), geom='bar', fill=as.factor(SantiagoSurvey2016$r0C_GENERO))+
+  coord_flip()+
+  scale_x_discrete("Education Levels",
+                   labels=c("A"="ELEMENTARY","B"="SECUNDARY",
+                            "C"="PROFESS_TECH","D"="COLLEGE",
+                            "E"="POSTGRAD"))+
+  scale_fill_discrete(name="Gender",
+                      breaks=c("1", "2"),
+                      labels=c("Male", "Female"))+
+  ggtitle("Education Levels by Gender")+ylab('No. of People')
+```
+
+```{r}
+#Employment Pie Chart
+SantiagoSurvey2016$r0H_OCUPACION <- reorder(SantiagoSurvey2016$r0H_OCUPACION, X = SantiagoSurvey2016$r0H_OCUPACION, 
+                            FUN = function(x) -length(x))
+
+at <- nrow(SantiagoSurvey2016) - as.numeric(cumsum(sort(table(SantiagoSurvey2016$r0H_OCUPACION)))-
+                                  0.5*sort(table(SantiagoSurvey2016$r0H_OCUPACION)))
+
+label=paste0(round(sort(table(SantiagoSurvey2016$r0H_OCUPACION))/
+                     sum(table(SantiagoSurvey2016$r0H_OCUPACION)),2) * 100,"%")
+
+p <- ggplot(SantiagoSurvey2016,aes(x="", fill = r0H_OCUPACION)) +
+  geom_bar(width = 1) +
+  scale_fill_discrete(name="Occupation",
+                      breaks=c("A","B","C", "D", "E", "F", "G", "H"),
+                      labels=c("FULL_TIME", "PART_TIME","SELF_EMPLOYED", "UNEMPLOYED", "HOME_TAKER", "STUDENT", "STUDENT_WORK", "RETIRED"))+
+  coord_polar(theta="y") +
+  annotate(geom = "text", y = at, x = 1.5, label = label,size=3)+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid  = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())+
+  ggtitle("Occupation Type")
+print(p)
+```
+
+```{r}
+# df <- data.frame(matrix(ncol = 2, nrow = 6)) 
+# colnames(df)<-c('Income','Frequency')
+# df$r0J_INGRESO<-c('Less423','423to639', '639to977','977to1550','1550to2380',
+#            '2380more')
+# 
+# for (i in 1:6){df[i,2]<-sum(SantiagoSurvey2016[,77+i])}
+# 
+# df$r0J_INGRESO<-factor(df$r0J_INGRESO, levels=df$r0J_INGRESO) #to prevent reordering of bars
+# 
+# 
+# ggplot(df,aes(x=r0J_INGRESO, y=Frequency), fill=df$r0J_INGRESO)+
+#   geom_bar(stat="identity")+
+#   scale_x_discrete("Personal Income Groups")+
+#   coord_flip()+
+#   ggtitle('Personal Income Distribution')+
+#   ylab('No. of People')
+```
+
+
+The theme of the next table, `Santiago_TW`, deals with commuting and work variables (see @tbl-Travel-work-Descriptives) and consists of seven ordinal categorical variables (factors). Variable `r8A_ACCESSJOB` refers to the impact that respondents feel the transportation network has affected their chances of having better jobs. The most common responses were `SOME IMPACT` and `NO IMPACT`, but we see that approximately 14.2\% of respondents feel that the network has had a major impact. This variable tracks to some extent with the responses to job opportunities in the commune of residence (`r8B_JOBOPP`), suggesting a possible correlation between local opportunities and the impact of the transportation network on job outcomes. When asked about their ideal level of accessibility in the commune of the residence (`r8C_ACC_COM`), a majority respondents opt for excellent and very good (**BEA:** I AM A LITTLE UNCLEAR ABOUT THE MEANING OF THE QUESTION THAT PRODUCES THIS VARIABLE).
+
+In terms of the level of satisfaction with their current job, we see that almost 60\% of respondents are at least highly satisfied. We also see that long commutes are frequent in this sample, with about one third or respondents spending 1 h or more travelling (**BEA:** ONE WAY OR TWO WAYS?) and about one quarter of respondents spending between 40 minutes and one hour in their daily commute. This distribution is noteworthy because time spent commuting has been recognized as a factor that can affect physical and mental health and well-being in particular in association with motorized transportation [@brutus2017cycling].
+
+The most common time of the day for commuting is between 7 am and 9 am, but there are also 171 missing responses in this column, so not much can be read from it. Finally, we note that many people spend 35,000-75,000 (**BEA:** WHAT ARE THE UNITS OF THIS? IS IT 35 PESOS OR 35,000 PESOS) monthly on their transportation expenditure. (**BEA:** MAYBE COMMENT ON THE TYPICAL RATIO OF TRANSPORT EXPENDITURE TO INCOME).
+
+```{r summary-travel-to-work}
+#| tbl-cap: Variables regarding the commuting behavior of respondents
+#| tbl-cap-location: top
+#| label: tbl-Travel-work-Descriptives
+#| echo: false
+#
+#skim(Santiago_TW)
+skim_STW <- Santiago_TW |>
+  select(-ID) |>
+  skim()
+
+skim_STW$factor.top_counts[1] <- skim_STW$factor.top_counts[1] |>
+  str_replace_all(c(SOM = "SOME IMPACT", 
+                    NO = "NO IMPACT",
+                    MIN = "MINOR IMPACT",
+                    MAJ = "MAJOR IMPACT"))
+
+skim_STW$factor.top_counts[2] <- skim_STW$factor.top_counts[2] |>
+  str_replace_all(c(GOO = "GOOD",
+                    POO = "POOR",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD"))
+
+skim_STW$factor.top_counts[3] <- skim_STW$factor.top_counts[3] |>
+  str_replace_all(c(EXC = "EXCELLENT",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR"))
+
+skim_STW$factor.top_counts[4] <- skim_STW$factor.top_counts[4] |>
+  str_replace_all(c(HIG = "HIGH SATISF",
+                    VHI = "VERY HIGH SATISF",
+                    MED = "MEDIUM SATISF",
+                    LOW = "LOW SATISF"))
+
+skim_STW$factor.top_counts[5] <- skim_STW$factor.top_counts[5] |>
+  str_replace_all(c("1h" = "1h and more",
+                    "40-" = "40-60 min",
+                    "20-" = "20-40 min",
+                    "0-2" = "0-20 min"))
+
+skim_STW$factor.top_counts[6] <- skim_STW$factor.top_counts[6] |>
+  str_replace_all(c("9:0" = "9:00 - 13:00",
+                    "7:0" = "7:00 - 9:00",
+                    "Oth" = "Others",
+                    "18:" = "18:00 - 21:00"))
+
+skim_STW$factor.top_counts[7] <- skim_STW$factor.top_counts[7] |>
+  str_replace_all(c("75." = "75,000-125,000",
+                    "35." = "35,000-75,000",
+                    "Les" = "LESS THAN 35,000",
+                    "Mor" = "MORE THAN 125,000"))
+  
+skim_STW
+```
+
+Table `Santiago_SI` includes five variables that capture various aspects of social interaction while commuting (see @tbl-Social-Interaction-Descriptives). Social interaction is a topic of interest for mode-related choices given earlier evidence that for some commuters privacy is an important consideration and/or a way to manage social stressors [@gardner2007drives; @paez2010enjoyment; @lowe2016conceptual]. When asked to rate the level of interaction with other people during their usual trips, respondents  In terms of the level of interaction people have with others during their usual trips, most of them presume a good level and they moderately feel it is important when they consider the presence of other people during their usual travels (`r4A_INTERACC`) a plurality of responses are "POOR" or "FAIR" (187) and only 73, that is 16.2\% of respondents, rate their level of interaction as "GOOD" or "EXCELLENT" report poor or fair (there are 13 missing responses). With respect to the presence of other people during their travels, the responses tend to be somewhat more ambivalent, and the difference between those for whom this is less or more important is smaller (157 responses are "NOT" or only "SLIGHTLY IMPORTANT" whereas 132 responses are "IMPORTANT" or "VERY IMPORTANT").
+
+The next two variables in this table deal with feelings and the experience of discrimination: "have you felt discriminated against while travelling?" (`r4C_DISCRIM`) and if so, "while using which mode of transportation" (`r4D_MODE`). We can see in @tbl-Social-Interaction-Descriptives, that slightly fewer than one quarter of respondents (24.2\%) report having felt discriminated while commuting (only 4 responses are missing), and of those close to half (44\%) had that experience in public transportation (however, note that about 58\% of those who felt discriminated against did not state the mode).
+
+```{r summary-social-interaction}
+#| tbl-cap: Variables regarding social interactions of respondents
+#| tbl-cap-location: top
+#| label: tbl-Social-Interaction-Descriptives
+#| echo: false
+#
+#skim(Santiago_SI)
+skim_SSI <- Santiago_SI |>
+  select(-ID) |>
+  skim()
+
+skim_SSI$factor.top_counts[1] <- skim_SSI$factor.top_counts[1] |>
+  str_replace_all(c(GOO = "GOOD", 
+                    FAI = "FAIR",
+                    POO = "POOR",
+                    VER = "VERY GOOD"))
+
+skim_SSI$factor.top_counts[2] <- skim_SSI$factor.top_counts[2] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SSI$factor.top_counts[4] <- skim_SSI$factor.top_counts[4] |>
+  str_replace_all(c(MET = "METRO",
+                    TAX = "TAXI"))
+
+skim_SSI
+```
+
+```{r}
+#| include: false
+Santiago_IC |> 
+  left_join(Santiago_SI, by = "ID") |>
+  select(r0C_SEX, r4C_DISCRIM, r0P_MODE1) |>
+  group_by(r0C_SEX, r4C_DISCRIM, r0P_MODE1) |>
+  summarize(discrim = n())
+```
+
+**BEA:** Niloofar described @tbl-ITC-Shifting-Descriptives as "telecommunication and shifting different modes" in the documentation, but I would like to ask for clarification, because it seems to me that the questions relate to _transfers_. For example, the question:
+
+- Do you shift between transport modes on your usual trips?	
+
+Seems to refer to transfers between public transportation modes (e.g., metro to bus), and then the next questions refer to how long waits are, and ease of transferring.
+
+- If YES in the previous question, how is the quality of these inerchanges?	
+
+- How would you assess your regular trips in terms of: Waiting times	How would you assess your regular trips in terms of: Time of shifts	
+
+- How would you assess your regular trips in terms of: Travel time	What main aspect makes your shifts difficult?	
+
+The last three questions relate to route planning tools, not ITC more generally (for instance, this is unrelated to working from home).
+
+- Do you have access to technology tools such as smartphones and internet, with which you can view information on transportation services?	
+
+- How do you assess the level of technological information available to see transportation alternatives? (eg smartphone applications, internet, signs)	
+
+- How important is it for you to have access to technological information for your usual trips?
+
+Please comment on these variables!
+
+**THIS IS NILOOFAR'S TEXT:**
+
+The information, telecommunications and mode shifting of respondents (see @tbl-ITC-Shifting-Descriptives) reveals numerous factorial variables using Likert scale to identify the exact level of respondents' viewpoints. We can see a considerable number of missing values in quality of changing mode of travel because of people's decision on mostly saying yes to shift between transport modes on their usual trips and for those who change the quality of these inerchanges was good. Many people assign a good level when they are asked to assess the waiting times, time of shifts and total travel time in their regular trips. Most people have access to technology tools such as smartphones and internet, with which they can view information on transportation services and they assign a good level of technological information available to see transportation alternatives (eg smartphone applications, internet, signs) and most of them assume it is very important to have access to technological information for their usual trips. 
+
+This section will gives insights on designing a strong transportation network to facilitate people's different activities such as work, school, grocery shopping and so forth. Also experts can make users informed about traffic circumstances, road information and cost of transportation by using various modes. Following this, car-use deduction has been turned into the political agenda around the world due to the increasing negative effects of motorized modes of travel on environment and public health. Therefore, improvements in public transportation sector are needed to achieve this goal regarding previous studies that has shown participants are more likely to use bus with increased frequencies, shorter travel time, and high access to bus stops[@ettema2011satisfaction].
+
+```{r summary-ITC-and-shifting}
+#| tbl-cap: Variables regarding information and telecommunications and mode shifting of respondents
+#| tbl-cap-location: top
+#| label: tbl-ITC-Shifting-Descriptives
+#| echo: false
+#
+#skim(Santiago_IS)
+skim_SIS <- Santiago_IS |>
+  select(-ID) |>
+  skim()
+
+skim_SIS$factor.top_counts[2] <- skim_SIS$factor.top_counts[2] |>
+  str_replace_all(c(GOO = "GOOD",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD",
+                    POO = "POOR"))
+
+skim_SIS$factor.top_counts[3] <- skim_SIS$factor.top_counts[3] |>
+  str_replace_all(c(GOO = "GOOD",
+                    POO = "POOR",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD"))
+
+skim_SIS$factor.top_counts[4] <- skim_SIS$factor.top_counts[4] |>
+  str_replace_all(c(GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR",
+                    POO = "POOR"))
+
+skim_SIS$factor.top_counts[5] <- skim_SIS$factor.top_counts[5] |>
+  str_replace_all(c(GOO = "GOOD",
+                    POO = "POOR",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD"))
+
+skim_SIS$factor.top_counts[6] <- skim_SIS$factor.top_counts[6] |>
+  str_replace_all(c(All = "ALL THE PREVIOUS ONES",
+                    Too = "TOO LONG SHIFTS",
+                    Unc = "UNCOMFORTABLE SHIFTING",
+                    Bad = "BAD INFRASTRUCTURE FOR WAITING TIMES"))
+
+skim_SIS$factor.top_counts[8] <- skim_SIS$factor.top_counts[8] |>
+  str_replace_all(c(GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SIS$factor.top_counts[9] <- skim_SIS$factor.top_counts[9] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SIS
+```
+
+The theme of table `Santiago_BE` is perceptions of the built environment. The way environments are perceived, and not just their objective attributes, has been shown to correlate with travel behavior [e.g., @Jamal2020perceptions; @Loo2015transport]. Surveying perceptions is therefore a good remedy to the lack of canonical data sets in regions of the world where built environment attributes are not systematically collected. 
+
+There are in total 22 variables in this table, and their descriptive statistics appear in @tbl-Built-Environment-Descriptives. The variables are organized in pairs: one asks about the perception of an attribute and the second the importance of that attribute to the respondent. In this way, `r7AA_AUTOSPACE` is about the perception of space for autos, and `r7BA_AUTOSPACE` is about the importance that respondents assign to this attribute. Aspects of the built environment covered by this table, in addition to space for autos, are number of parking spaces, quality of highways (**BEA:** ROADS IN GENERAL OR HIGHWAYS SPECIFICALLY?), space for pedestrians, quality of sidewalks, cleanliness of bus stops and seating areas, protection from inclement weather at bus stops, amount and quality of cycleways, and bike sharing schemes. 
+
+The descriptive statistics suggest that most respondents have positive evaluations of space for cars and parking spaces, at the same time that they assign a high level of importance to these attributes. Respondents also show a slight tendency to assess positively the space for pedestrians and quality of sidewalks located near of their home, and these features are also regarded as very important or important by a majority of respondents. In contrast, although respondents feel strongly about the importance of facilities related to buses and cycling, the perception of these attributes tends to be poor. 
+```{r summary-built-environment}
+#| tbl-cap: Variables regarding the built environment at the place of residence of respondents
+#| tbl-cap-location: top
+#| label: tbl-Built-Environment-Descriptives
+#| echo: false
+#
+#skim(Santiago_BE)
+skim_SBE <- Santiago_BE |>
+  select(-ID) |>
+  skim()
+
+skim_SBE$factor.top_counts[1] <- skim_SBE$factor.top_counts[1] |>
+  str_replace_all(c(GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SBE$factor.top_counts[2] <- skim_SBE$factor.top_counts[2] |>
+  str_replace_all(c(GOO = "GOOD",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD",
+                    POO = "POOR"))
+
+skim_SBE$factor.top_counts[3] <- skim_SBE$factor.top_counts[3] |>
+  str_replace_all(c(GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SBE$factor.top_counts[4] <- skim_SBE$factor.top_counts[4] |>
+  str_replace_all(c(GOO = "GOOD",
+                    VER = "VERY GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SBE$factor.top_counts[5] <- skim_SBE$factor.top_counts[5] |>
+  str_replace_all(c(GOO = "GOOD",
+                    FAI = "FAIR",
+                    VER = "VERY GOOD",
+                    POO = "POOR"))
+
+skim_SBE$factor.top_counts[6] <- skim_SBE$factor.top_counts[6] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD"))
+
+skim_SBE$factor.top_counts[7] <- skim_SBE$factor.top_counts[7] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD"))
+
+skim_SBE$factor.top_counts[8] <- skim_SBE$factor.top_counts[8] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD"))
+
+skim_SBE$factor.top_counts[9] <- skim_SBE$factor.top_counts[9] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD"))
+
+skim_SBE$factor.top_counts[10] <- skim_SBE$factor.top_counts[10] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD",
+                    VER = "VERY GOOD"))
+
+skim_SBE$factor.top_counts[11] <- skim_SBE$factor.top_counts[11] |>
+  str_replace_all(c(POO = "POOR",
+                    GOO = "GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SBE$factor.top_counts[12] <- skim_SBE$factor.top_counts[12] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[13] <- skim_SBE$factor.top_counts[13] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[14] <- skim_SBE$factor.top_counts[14] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SBE$factor.top_counts[15] <- skim_SBE$factor.top_counts[15] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SBE$factor.top_counts[16] <- skim_SBE$factor.top_counts[16] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[17] <- skim_SBE$factor.top_counts[17] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[18] <- skim_SBE$factor.top_counts[18] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[19] <- skim_SBE$factor.top_counts[19] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[20] <- skim_SBE$factor.top_counts[20] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SBE$factor.top_counts[21] <- skim_SBE$factor.top_counts[21] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+
+skim_SBE$factor.top_counts[22] <- skim_SBE$factor.top_counts[22] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+
+skim_SBE
+```
+
+Table `Santiago_H` contains responses to twelve questions related to health. 
+Health information could be useful in investigating affects of transportation policy decisions on public health. Also being aware of specific factors making modes stressful will help transportation and public health experts make commuting a safer, more enjoyable and less stressful activity. Consequently ,planners and transportation experts could mitigate the potentially serious health outcomes of a stressful commute [@legrain2015stressed]. Having such a detailed data set and understanding the relationship between health and mode choice in commuting would help them to adopt reform policies and management strategies in accordance with healthy modes of travel as active and public transportation [@mattisson2018modelling]. 
+
+Similar to the set of questions about the built environment, these questions have two parts: first, the respndents were asked to assess their experience of some aspect of their commute, and then  the importance they assign to this aspect of their commute. For example, variable `r1A_STRESS` refers to the level of stress that respondents experience in their usual trips; its companion variable is `r1GA_IMPSTRESS`, which refers to how important stress is to their experience. As seen in @tbl-Health-Information-Descriptives, a majority of respondents rate the stress in their commutes as medium or lower. This aspect of the experience is rated as very important or important by a majority of respondents. Other variables in this table contain information about the physical effort involved in their usual trips (`r1B_EFFORT` and `r1GB_IMPEFFORT`); proximity to other travelers in their usual trips (`r1C_PROX` and `r1GC_IMPPROX`); the environmental pollution they are exposed to in their usual trips (`r1D_CONTAM` and `r1GD_IMPCONTAM`); how safe they feel in their usual trips (`r1E_SAFETY` and `r1GE_IMPSAFETY`); and finally how comfortable their trips are (`r1F_COMFORT` and `r1GF_IMPCOMFORT`). 
+```{r summary-health-information}
+#| tbl-cap: Variables regarding health information of respondents
+#| tbl-cap-location: top
+#| label: tbl-Health-Information-Descriptives
+#| echo: false
+#
+#skim(Santiago_H)
+skim_SH <- Santiago_H |>
+  select(-ID) |>
+  skim()
+skim_SH$factor.top_counts[1] <- skim_SH$factor.top_counts[1] |>
+  str_replace_all(c(HIG = "HIGH",
+                    VHI = "VERY HIGH", 
+                    MED = "MEDIUM",
+                    LOW = "LOW",
+                    VLO = "VERY LOW"))
+
+skim_SH$factor.top_counts[2] <- skim_SH$factor.top_counts[2] |>
+  str_replace_all(c(NEU = "NEUTRAL", 
+                    POS = "POSITIVE",
+                    VPO = "VPOSITVE",
+                    NEG = "NEGATIVE"))
+
+skim_SH$factor.top_counts[3] <- skim_SH$factor.top_counts[3] |>
+  str_replace_all(c(POO = "POOR", 
+                    GOO = "GOOD",
+                    FAI = "FAIR",
+                    EXC = "EXCELLENT"))
+
+skim_SH$factor.top_counts[4] <- skim_SH$factor.top_counts[4] |>
+  str_replace_all(c(VDI = "VDISSATISFIED", 
+                    DIS = "DISSATISFIED",
+                    UNS = "UNSURE",
+                    SAT = "SATISFIED"))
+
+skim_SH$factor.top_counts[5] <- skim_SH$factor.top_counts[5] |>
+  str_replace_all(c(VDI = "VDISSATISFIED", 
+                    DIS = "DISSATISFIED",
+                    UNS = "UNSURE",
+                    SAT = "SATISFIED"))
+
+skim_SH$factor.top_counts[6] <- skim_SH$factor.top_counts[6] |>
+  str_replace_all(c(VDI = "VDISSATISFIED", 
+                    DIS = "DISSATISFIED",
+                    UNS = "UNSURE",
+                    SAT = "SATISFIED"))
+
+skim_SH$factor.top_counts[7] <- skim_SH$factor.top_counts[7] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH$factor.top_counts[8] <- skim_SH$factor.top_counts[8] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH$factor.top_counts[9] <- skim_SH$factor.top_counts[9] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH$factor.top_counts[10] <- skim_SH$factor.top_counts[10] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH$factor.top_counts[11] <- skim_SH$factor.top_counts[11] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH$factor.top_counts[12] <- skim_SH$factor.top_counts[12] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SH
+```
+
+**NOTE FROM ANTONIO:** SEVERAL TABLES NEED MY ATTENTION BEFORE THEY ARE READY TO BE SEEN BY BEA
+
+<!--
+
+@Mella2021drivers
+
+First part of the data set of feelings and emotions (see @tbl-Feelings-Emotions-Descriptives) reveals factorial variables that people consider them pertained to a specific mode of travel. In terms of freedom, health and social interactions most of people mention them related to walking as a transportation mode. Many people consider using bus connected to unsafety, poverty, unpunctuality, congestion and uncomfortale conditions variables.In terms of using car as the mode of travel, most of respondents identified it connected to functionality, safety, luxury and status. A large group of people declare that bike riding would be related to enjoyment, low-cost and environment care. The only efficiency variable is being connected to using metro as the mode of transportation in respondents' opinions. In the second part of this table people evaluate the level of enjoy when they are traveling to their daily activities and most of them use average level for this variable and revealed the quality of their trips are very low which is not satisfying. Totally in this table we have half of respondents' answer and the other half is missing values in all variables.
+feelings and emotions information can be used to mapping and understanding travel behavior and would lead to a more sustainable transportation network. Additionally, this information can make policy makers aware to make targeted choices about where to make physical amelioration as well as on which characteristics to attempt to influence perceptions of alternative modes[@anable2005all]. Similarly, by trying to identify a correlation between feelings, emotions and modes of transportation, planners would be able to persuade people to use more active modes of travel or public transport will be resulted in making our transportation system more sustainable. 
+
+```{r summary-feelings-and-emotions}
+#| tbl-cap: Variables regarding feelings and emotions of respondents
+#| tbl-cap-location: top
+#| label: tbl-Feelings-Emotions-Descriptives
+#| echo: false
+#
+#skim(Santiago_FE)
+skim_SFE <- Santiago_FE |>
+  select(-ID) |>
+  skim()
+skim_SFE$factor.top_counts[1] <- skim_SFE$factor.top_counts[1] |>
+  str_replace_all(c(WAL = "WALK", 
+                    BIC = "BICYCLE",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[2] <- skim_SFE$factor.top_counts[2] |>
+  str_replace_all(c(MOT = "MOTO",
+                    WAL = "WALK", 
+                    BIC = "BICYCLE"))
+
+skim_SFE$factor.top_counts[3] <- skim_SFE$factor.top_counts[3] |>
+  str_replace_all(c(MET = "MOTO",
+                    BIC = "BICYCLE",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[4] <- skim_SFE$factor.top_counts[4] |>
+  str_replace_all(c(BIC = "BICYCLE",
+                    WAL = "WALK",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[5] <- skim_SFE$factor.top_counts[5] |>
+  str_replace_all(c(BIC = "BICYCLE",
+                    WAL = "WALK",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[6] <- skim_SFE$factor.top_counts[6] |>
+  str_replace_all(c(WAL = "WALK",
+                    BIC = "BICYCLE",
+                    COL = "COLECTIVO"))
+
+skim_SFE$factor.top_counts[7] <- skim_SFE$factor.top_counts[7] |>
+  str_replace_all(c(MET = "METRO",
+                    TAX = "TAXI",
+                    WAL = "WALK"))
+
+skim_SFE$factor.top_counts[8] <- skim_SFE$factor.top_counts[8] |>
+  str_replace_all(c(MET = "METRO",
+                    WAL = "WALK"))
+
+skim_SFE$factor.top_counts[9] <- skim_SFE$factor.top_counts[9] |>
+  str_replace_all(c(MET = "METRO",
+                    WAL = "WALK"))
+
+skim_SFE$factor.top_counts[10] <- skim_SFE$factor.top_counts[10] |>
+  str_replace_all(c(MET = "METRO",
+                    TAX = "TAX"))
+
+skim_SFE$factor.top_counts[11] <- skim_SFE$factor.top_counts[11] |>
+  str_replace_all(c(MET = "METRO",
+                    BIC = "BICYCLE",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[12] <- skim_SFE$factor.top_counts[12] |>
+  str_replace_all(c(TAX = "TAXI",
+                    BIC = "BICYCLE",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[13] <- skim_SFE$factor.top_counts[13] |>
+  str_replace_all(c(BIC = "BICYCLE",
+                    WALK ="WALK",
+                    MET = "METRO"))
+
+skim_SFE$factor.top_counts[14] <- skim_SFE$factor.top_counts[14] |>
+  str_replace_all(c(WALK ="WALK",
+                    BIC = "BICYCLE",
+                    TAX = "TAXI"))
+
+skim_SFE$factor.top_counts[15] <- skim_SFE$factor.top_counts[15] |>
+  str_replace_all(c(WALK ="WALK",
+                    MET = "METRO",
+                    BIC = "BICYCLE"))
+
+skim_SFE$factor.top_counts[16] <- skim_SFE$factor.top_counts[16] |>
+  str_replace_all(c(MET ="METRO",
+                    COL = "COLECTIVO",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[17] <- skim_SFE$factor.top_counts[17] |>
+  str_replace_all(c(BIC ="BICYCLE",
+                    WAL = "WALK",
+                    MOT = "MOTO"))
+
+skim_SFE$factor.top_counts[18] <- skim_SFE$factor.top_counts[18] |>
+  str_replace_all(c(TAX ="TAXI",
+                    BIC = "BICYCLE",
+                    WAL = "WALK"))
+
+skim_SFE$factor.top_counts[19] <- skim_SFE$factor.top_counts[19] |>
+  str_replace_all(c(MED = "MEDIUM", 
+                    HIG = "HIGH",
+                    VHI = "VERY High",
+                    LOW = "LOW"))
+
+skim_SFE$factor.top_counts[20] <- skim_SFE$factor.top_counts[20] |>
+  str_replace_all(c(VLO = "VERY LOW", 
+                    LOW = "LOW",
+                    MED = "MEDIUM",
+                    HIG = "HIGH"))
+
+skim_SFE$factor.top_counts[21] <- skim_SFE$factor.top_counts[21] |>
+  str_replace_all(c(ALL = "ALL OF THEM", 
+                    TRA = "TRAVEL TIME",
+                    CRO = "CROWDNESS OF PASSENGERS",
+                    COM = "COMFORT ABSENCE"))
+
+skim_SFE$factor.top_counts[22] <- skim_SFE$factor.top_counts[22] |>
+  str_replace_all(c(ALL = "ALL OF THEM", 
+                    RED = "REDUCTION OF TIME TRAVEL",
+                    LES = "LESS CROWDNESS OF PASSENGERS",
+                    BET = "BETTER QULALITY ON STREETS"))
+
+skim_SFE
+```
+
+Table of decision-making and planning of respondents (see @tbl-Reason-Planning-Decision-Descriptives) includes different factorial variables using Likert scale and has two parts of an assessment of a variable and its importance from respondents' viewpoints. Most of people assign level of good when they assess their access to employment opportunities through public transport and presume a good level about their access to public transport which allows them to access the employment they need. While people sometimes visit family and friends, do recreational, cultural and sport activities,  and they assign a  moderate importance to them, most of them often go for grocery/food shopping and social activities and consider it moderately important. In terms of options most of people assume it is very important to have several options in using different modes of transport and they assign very high when they consider quality of life depends on the access they currently have to public transport. Also most people highly think their quality of life would increase if they have better access to public transport.About the affordability and unaffordability of a mode of travel, a large group of people assign car and taxi to these variables, respectively. For different aspects of the public transport system most of people mention that it has very importance for them to improve access to offices and commercial areas, disponibility of different transport modes, comfort for the use of public transport and the incorporation of other modes to the fare system. Almost all the variables are fairly complete except being economic and uneconomic variables which nearly half of respondents reacted to them.
+
+The most important role of the transportation network and public modes of travel is to provide people with access to different destination in order to travel for business, reuniting with other people, doing grocery shopping and so on. This data set gives us a wide range of variables helpful for identifying people's travel pattern and what level of importance do people assign.So it would be useful for transport-related experts to have an insight about people movement to provide network system with a an appropriate level of performance to increase the efficiency and promote urban transportation system.
+```{r summary-reason-and-planning-decision}
+#| tbl-cap: Variables regarding decision-making and planning of respondents
+#| tbl-cap-location: top
+#| label: tbl-Reason-Planning-Decision-Descriptives
+#| echo: false
+#
+#skim(Santiago_RPD)
+skim_SRPD <- Santiago_RPD |>
+  select(-ID) |>
+  skim()
+
+skim_SRPD$factor.top_counts[1] <- skim_SRPD$factor.top_counts[1] |>
+  str_replace_all(c(GOO = "GOOD", 
+                    FAI = "FAIR",
+                    VER = "VERY GOOD",
+                    POO = "POOR"))
+
+skim_SRPD$factor.top_counts[2] <- skim_SRPD$factor.top_counts[2] |>
+  str_replace_all(c(GOO = "GOOD",
+                    EXC = "POOR",
+                    VER = "VERY GOOD", 
+                    FAI = "FAIR"))
+
+skim_SRPD$factor.top_counts[3] <- skim_SRPD$factor.top_counts[3] |>
+  str_replace_all(c(SOM = "SOMWTIMEs",
+                    OFT = "OFTEN",
+                    ALW = "ALWAYS", 
+                    NEV = "NEVER"))
+ 
+skim_SRPD$factor.top_counts[4] <- skim_SRPD$factor.top_counts[4] |>
+  str_replace_all(c(SOM = "SOMWTIMEs",
+                    OFT = "OFTEN",
+                    ALW = "ALWAYS", 
+                    RAR = "RARELY"))
+
+skim_SRPD$factor.top_counts[5] <- skim_SRPD$factor.top_counts[5] |>
+  str_replace_all(c(SOM = "SOMWTIMEs",
+                    RAR = "RARELY",
+                    NEV = "NEVER",
+                    OFT = "OFTEN"))
+
+skim_SRPD$factor.top_counts[6] <- skim_SRPD$factor.top_counts[6] |>
+  str_replace_all(c(SOM = "SOMWTIMEs",
+                    NEV = "NEVER",
+                    RAR = "RARELY",
+                    OFT = "OFTEN"))
+
+skim_SRPD$factor.top_counts[7] <- skim_SRPD$factor.top_counts[7] |>
+  str_replace_all(c(OFT = "OFTEN",
+                    SOM = "SOMWTIMEs",
+                    ALW = "ALWAYS",
+                    NEV = "NEVER"))
+
+skim_SRPD$factor.top_counts[8] <- skim_SRPD$factor.top_counts[8] |>
+  str_replace_all(c(OFT = "OFTEN",
+                    SOM = "SOMWTIMEs",
+                    ALW = "ALWAYS",
+                    NEV = "NEVER"))
+
+skim_SRPD$factor.top_counts[9] <- skim_SRPD$factor.top_counts[9] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT",
+                    VER = "VERY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[10] <- skim_SRPD$factor.top_counts[10] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SRPD$factor.top_counts[11] <- skim_SRPD$factor.top_counts[11] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SRPD$factor.top_counts[12] <- skim_SRPD$factor.top_counts[12] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[13] <- skim_SRPD$factor.top_counts[13] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT",
+                    VER = "VERY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[14] <- skim_SRPD$factor.top_counts[14] |>
+  str_replace_all(c(MOD = "MODERATELY IMPORTANT",
+                    IMP = "IMPORTANT",
+                    NOT = "NOT IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[15] <- skim_SRPD$factor.top_counts[15] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "NOT IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[16] <- skim_SRPD$factor.top_counts[16] |>
+  str_replace_all(c(HIG = "HIGH",
+                    VHI = "VERY HIGH",
+                    MED = "MEDIUM",
+                    LOW = "BELOW AVERAGE"))
+
+skim_SRPD$factor.top_counts[17] <- skim_SRPD$factor.top_counts[17] |>
+  str_replace_all(c(HIG = "HIGH",
+                    VHI = "VERY HIGH",
+                    MED = "MEDIUM",
+                    LOW = "BELOW AVERAGE"))
+
+skim_SRPD$factor.top_counts[18] <- skim_SRPD$factor.top_counts[18] |>
+  str_replace_all(c(MET = "METRO"))
+
+skim_SRPD$factor.top_counts[19] <- skim_SRPD$factor.top_counts[19] |>
+  str_replace_all(c(TAX = "TAXI",
+                    MOT = "MOTO",
+                    COL = "COLECTIVO"))
+
+skim_SRPD$factor.top_counts[20] <- skim_SRPD$factor.top_counts[20] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "NOT IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[21] <- skim_SRPD$factor.top_counts[21] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "NOT IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[22] <- skim_SRPD$factor.top_counts[22] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "NOT IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD$factor.top_counts[23] <- skim_SRPD$factor.top_counts[23] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "NOT IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SRPD
+```
+
+It can be seen there are different variables in nature and sustainability table (see @tbl-Nature-Nustainability-Descriptives) more through using Likert scale to organize respondents' answer  to variables.We can see lots of missing values for changing the mode because most of people do not tend to change their main mode  of travel when it comes to a climatic event like heavy rain or flood and for whom wants to change, using car has the most priority. Most of people have poor level of access to the currently available sustainable modes of transport (eg hybrid buses, electric cars, public bicycles) and they assign high level of importance to that. Again we have so many missing value in payment variable because almost half of people would be willing to spend more on transportation to gain access to more sustainable modes and they indicate 5-15% of their payments they tend to spend in this regard.In terms of level of importance of improving different aspects in public transport routes most respondents assume high level of importance to presence of trees,  access to parks, access to sustainable transport modes and broaden supply of sustainable transport modes. 
+Nature and sustainablity information will helps planner to provide people with a safe, convenient and environment-friendly transportation system. This will also boost the quality of life, people's mobility and goods and enhance economic growth through efficient transportation services. Moreover policy makers would put in place environmental laws and excessive charges for personal car use and ownership [@alyavina2020mobility].
+
+```{r summary-nature-and-sustainability}
+#| tbl-cap: Variables regarding perspectives about nature and sustainability of respondents
+#| tbl-cap-location: top
+#| label: tbl-Nature-Nustainability-Descriptives
+#| echo: false
+#
+#skim(Santiago_NS)
+skim_SNS <- Santiago_NS |>
+  select(-ID) |>
+  skim()
+
+skim_SNS$factor.top_counts[2] <- skim_SNS$factor.top_counts[2] |>
+  str_replace_all(c(MET = "METRO", 
+                    TAX = "TAXI",
+                    COL = "COLECTIVO"))
+
+skim_SNS$factor.top_counts[3] <- skim_SNS$factor.top_counts[3] |>
+  str_replace_all(c(POO = "POOR",
+                    FAI = "FAIR",
+                    GOO = "GOOD", 
+                    VER = "VERY GOOD"))
+
+skim_SNS$factor.top_counts[4] <- skim_SNS$factor.top_counts[4] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SNS$factor.top_counts[6] <- skim_SNS$factor.top_counts[6] |>
+  str_replace_all(c("30" = "30% or more",
+                    "15" = "15-30%",
+                    "5-1" = "5-15%")) 
+                  
+skim_SNS$factor.top_counts[7] <- skim_SNS$factor.top_counts[7] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    NOT = "NOT IMPORTANT"))
+
+skim_SNS$factor.top_counts[8] <- skim_SNS$factor.top_counts[8] |>
+  str_replace_all(c(VER = "VERY IMPORTANT",
+                    IMP = "IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SNS$factor.top_counts[9] <- skim_SNS$factor.top_counts[9] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+
+skim_SNS$factor.top_counts[10] <- skim_SNS$factor.top_counts[10] |>
+  str_replace_all(c(IMP = "IMPORTANT",
+                    VER = "VERY IMPORTANT",
+                    MOD = "MODERATELY IMPORTANT",
+                    SLI = "SLIGHTLY IMPORTANT"))
+                    
+                    
+skim_SNS
+```
+-->
+
+## Experimental Design, Materials and Methods
+
+The study is based on a paper-based survey conducted face-to-face in Santiago in 2016. The survey collected information on a wide range of travel-related issues (socio-demographics, health-related, perceptions and travel behavior, travel choices and planning, social interaction factors, built environment, among others). The data collection considered a quota-sampling method based on the information from Pre-Census of 2012, and in total, 451 persons validly completed the survey. This paper considers the first part of the survey, with information about the basic socio-economic data, travel choices, activities and commuting information, and the question related to the levels of stress experienced in while traveling.
+
+## Acknowledgements
+
+## References 
+
+
