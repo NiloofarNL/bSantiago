@@ -4,18 +4,19 @@
 # A Reproducible Dataset to Study Transportation, Residential Context, and Well-being in Santiago, Chile in R
 
 ## Introduction
+## Introduction
+
 
 In this notebook we read and preprocess the raw data collected as a
 paper-based survey conducted face-to-face in Santiago in 2016 by
-Dr. Beatriz Mella-Lira. The survey collected information on a wide range
+Dr.Beatriz Mella-Lira. The survey collected information on a wide range
 of travel-related issues (socio-demographics, health-related,
 perceptions and travel behaviour, travel choices and planning, social
 interaction factors, built environment, and so on).
 
 The data collection considered a quota-sampling method based on the
 information from the Pre-census of 2012, and with a total of 451
-persons.
-
+persons. 
 To access the raw material used for generating this dataset, we first
 need to learn how to use this repository in `RStudio`.
 
