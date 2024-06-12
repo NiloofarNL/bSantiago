@@ -4,6 +4,7 @@
 # A Reproducible Dataset to Study Transportation, Residential Context, and Well-being in Santiago, Chile in R
 
 ## Introduction
+Introduction
 
 In this notebook we read and preprocess the raw data collected as a
 paper-based survey conducted face-to-face in Santiago in 2016 by
